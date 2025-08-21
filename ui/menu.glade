@@ -5,8 +5,8 @@
   <object class="GtkWindow" id="menu_window">
     <property name="can-focus">True</property>
     <property name="title" translatable="yes">Proyecto_IO</property>
-    <property name="default-width">900</property>
-    <property name="default-height">600</property>
+    <property name="default-width">700</property>
+    <property name="default-height">400</property>
     <property name="gravity">center</property>
     <child>
       <object class="GtkBox" id="box">
