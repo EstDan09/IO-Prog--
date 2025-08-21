@@ -3,11 +3,15 @@
 <interface>
   <requires lib="gtk+" version="3.24"/>
   <object class="GtkWindow" id="menu_window">
-    <property name="can-focus">False</property>
+    <property name="can-focus">True</property>
+    <property name="title" translatable="yes">Proyecto_IO</property>
+    <property name="default-width">900</property>
+    <property name="default-height">600</property>
+    <property name="gravity">center</property>
     <child>
       <object class="GtkBox" id="box">
         <property name="visible">True</property>
-        <property name="can-focus">False</property>
+        <property name="can-focus">True</property>
         <property name="margin-left">24</property>
         <property name="margin-right">24</property>
         <property name="margin-start">24</property>
@@ -22,9 +26,12 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <style>
+              <class name="boton-per"/>
+            </style>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
@@ -37,7 +44,7 @@
             <property name="receives-default">True</property>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">1</property>
           </packing>
@@ -50,7 +57,7 @@
             <property name="receives-default">True</property>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">2</property>
           </packing>
@@ -63,7 +70,7 @@
             <property name="receives-default">True</property>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">3</property>
           </packing>
@@ -72,9 +79,12 @@
           <object class="GtkButton" id="btn_salir">
             <property name="label" translatable="yes">Salir del Programa
 </property>
+            <property name="use-action-appearance">True</property>
             <property name="visible">True</property>
+            <property name="app-paintable">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="valign">center</property>
           </object>
           <packing>
             <property name="expand">False</property>
