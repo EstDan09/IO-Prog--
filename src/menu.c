@@ -91,6 +91,8 @@ int main(int argc, char *argv[]) {
 
     gtk_widget_set_tooltip_text(b1, "Ejecuta Algoritmo 1 (pendiente)");
     gtk_widget_set_tooltip_text(b2, "Ejecuta Algoritmo 2 (pendiente)");
+    gtk_widget_set_tooltip_text(b3, "Ejecuta Algoritmo 3 (pendiente)");
+    gtk_widget_set_tooltip_text(b4, "Ejecuta Algoritmo 4 (pendiente)");
     gtk_widget_set_tooltip_text(bout, "Salir del menú");
 
     g_signal_connect(win,  "destroy", G_CALLBACK(on_destroy), NULL);
