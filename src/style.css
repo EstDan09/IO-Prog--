@@ -61,3 +61,13 @@ button.option:active {
 #btn_salir:active {
     background-color: #922b21;  
 }
+
+.warning-dialog {
+    background-color: #fff8e1;  
+    border: 2px solid #ff7300;  
+    border-radius: 6px;
+    color: #333;
+    font-weight: bold;
+    font-size: 14px;
+}
+
