@@ -2,6 +2,10 @@
     background-color: #d0dad0;   
 }
 
+.bg-pending{
+    background-color: #d0dad0;
+}
+
 
 button.option {
     background-color: #ffffff;   
@@ -12,6 +16,21 @@ button.option {
     font-size: 14px;
     border: 2px solid #2e7d32;
     transition: all 200ms ease-in-out;
+}
+
+.pending-button {
+    background-color: #ffffff;   
+    color: #000000;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #7e2222;
+    transition: all 200ms ease-in-out;
+}
+
+.pending-button:hover {
+    background-color: #a93226;
 }
 
 button.option:hover {

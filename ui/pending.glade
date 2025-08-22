@@ -25,6 +25,9 @@
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="label" translatable="yes">Programa no disponible</property>
+            <attributes>
+              <attribute name="foreground" value="#000000000000"/>
+            </attributes>
           </object>
           <packing>
             <property name="expand">False</property>
