@@ -79,15 +79,24 @@ static void launch_pending(GtkButton *button, gpointer user_data)
     GError *error = NULL;
 
     gboolean ok = g_spawn_async(
-        /* working_directory */ NULL,
-        /* argv */              argv,
-        /* envp */              NULL,
-        /* flags */             G_SPAWN_DO_NOT_REAP_CHILD,
-        /* child_setup */       child_setup_func, /* para poder matar el grupo */
-        /* user_data */         NULL,
-        /* child_pid */         &pending_pid,
-        /* error */             &error
+         NULL, // directorio
+         argv,
+         NULL,
+         G_SPAWN_DO_NOT_REAP_CHILD, // setup del child 
+         child_setup_func, // mata el grupo 
+         NULL,
+         &pending_pid, // pid del child
+         &error
     );
+    /* working_directory */
+/* argv */             
+/* envp */             
+/* flags */            
+/* child_setup */      
+/* para poder matar el 
+/* user_data */        
+/* child_pid */        
+/* error */            
 
     if (!ok) {
         g_printerr("No se pudo lanzar pending: %s\n",
