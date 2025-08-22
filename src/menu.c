@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-/* PID del proceso 'pending' (0 = no hay proceso corriendo) */
+/* PID del proceso 'pending' */
 static GPid pending_pid = 0;
 
 //prototipos
@@ -71,7 +71,7 @@ static void launch_pending(GtkButton *button, gpointer user_data)
     (void)user_data;
 
     if (pending_pid > 0) {
-        g_print("Ya hay un 'pending' corriendo (PID=%d)\n", pending_pid);
+        //g_print("Ya hay un 'pending' corriendo (PID=%d)\n", pending_pid);
         return;
     }
 
