@@ -88,16 +88,7 @@ static void launch_pending(GtkButton *button, gpointer user_data)
          &pending_pid, // pid del child
          &error
     );
-    /* working_directory */
-/* argv */             
-/* envp */             
-/* flags */            
-/* child_setup */      
-/* para poder matar el 
-/* user_data */        
-/* child_pid */        
-/* error */            
-
+           
     if (!ok) {
         g_printerr("No se pudo lanzar pending: %s\n",
                    (error && error->message) ? error->message : "error desconocido");
