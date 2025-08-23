@@ -5,44 +5,48 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+<<<<<<< HEAD
 /* PID del proceso 'pending' */
 static GPid pending_pid = 0;
+=======
+/* PID del proceso 'pending' (0 = no hay proceso corriendo) */
+// static GPid pending_pid = 0;
+
+// Información obtenida de: https://docs.gtk.org/glib/struct.HashTable.html
+static GHashTable *pending_map = NULL; 
+>>>>>>> origin/develop
 
 //prototipos
 static void on_destroy(GtkWidget *w, gpointer data);
 static void on_quit_clicked(GtkButton *button, gpointer user_data);
 static void on_pending_exit(GPid pid, gint status, gpointer data);
-static gboolean kill_pending_cb(gpointer data);
-static void terminate_pending_if_running(void);
+// static gboolean kill_pending_cb(gpointer data);
 static void launch_pending(GtkButton *button, gpointer user_data);
 static void child_setup_func(gpointer user_data);
 
 //antiTorres
 static void on_pending_exit(GPid pid, gint status, gpointer data) {
     (void)status;
-    (void)data;
-    if (pid == pending_pid) {
-        g_spawn_close_pid(pid);
-        pending_pid = 0;
+    GtkButton *button = GTK_BUTTON(data);
+
+    if (g_hash_table_lookup(pending_map, button) == GINT_TO_POINTER(pid)) {
+        g_hash_table_remove(pending_map, button);
     }
+
+    g_spawn_close_pid(pid);
 }
 
+
 //antiTorres2.0
-static gboolean kill_pending_cb(gpointer data) {
+/*static gboolean kill_pending_cb(gpointer data) {
     (void)data;
     if (pending_pid > 0) {
         kill(-pending_pid, SIGKILL);
     }
     return G_SOURCE_REMOVE;
-}
+}*/
 
-/* Envía SIGTERM al pending (y luego SIGKILL en 1s si sigue vivo) */
-static void terminate_pending_if_running(void) {
-    if (pending_pid > 0) {
-        kill(-pending_pid, SIGTERM);
-        g_timeout_add(1000, kill_pending_cb, NULL);
-    }
-}
+
 
 /* El hijo se vuelve líder de su propio grupo para poder matar su descendencia */
 static void child_setup_func(gpointer user_data) {
@@ -54,52 +58,92 @@ static void child_setup_func(gpointer user_data) {
 /**
  * funcion destructura de ventana
  */
-static void on_destroy(GtkWidget *w, gpointer data)
-{
-    (void)w;
-    (void)data;
-    terminate_pending_if_running();
+static void on_destroy(GtkWidget *w, gpointer data) {
+    (void)w; (void)data;
+
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, pending_map);
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+        GPid pid = GPOINTER_TO_INT(value);
+        if (pid > 0) {
+            kill(-pid, SIGTERM);
+        }
+    }
+
     gtk_main_quit();
 }
+
 
 /**
  * funcion de accion para abrir widget de pending
  */
-static void launch_pending(GtkButton *button, gpointer user_data)
-{
-    (void)button;
+static void launch_pending(GtkButton *button, gpointer user_data) {
     (void)user_data;
 
+<<<<<<< HEAD
     if (pending_pid > 0) {
         //g_print("Ya hay un 'pending' corriendo (PID=%d)\n", pending_pid);
         return;
     }
+=======
+    GPid existing_pid = GPOINTER_TO_INT(g_hash_table_lookup(pending_map, button));
+    if (existing_pid > 0) {
+    GtkWidget *dialog = gtk_message_dialog_new(
+        GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))), // parent
+        GTK_DIALOG_MODAL,
+        GTK_MESSAGE_WARNING,
+        GTK_BUTTONS_OK,
+        "Ya hay un 'pending' corriendo para este botón (PID=%d)",
+        existing_pid
+    );
+
+    gtk_style_context_add_class(
+    gtk_widget_get_style_context(dialog),
+    "warning-dialog"
+);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    return;
+}
+
+>>>>>>> origin/develop
 
     char *argv[] = {"./bin/pending", NULL};
     GError *error = NULL;
+    GPid pid = 0;
 
     gboolean ok = g_spawn_async(
-         NULL, // directorio
+         NULL,
          argv,
          NULL,
-         G_SPAWN_DO_NOT_REAP_CHILD, // setup del child 
-         child_setup_func, // mata el grupo 
+         G_SPAWN_DO_NOT_REAP_CHILD,
+         child_setup_func,
          NULL,
-         &pending_pid, // pid del child
+         &pid,
          &error
+<<<<<<< HEAD
     );
            
+=======
+    );       
+
+>>>>>>> origin/develop
     if (!ok) {
         g_printerr("No se pudo lanzar pending: %s\n",
                    (error && error->message) ? error->message : "error desconocido");
         if (error) g_clear_error(&error);
-        pending_pid = 0;
         return;
     }
 
-    /* Recolectar cuando termine para no dejar zombi */
-    g_child_watch_add(pending_pid, on_pending_exit, NULL);
+    // Guardar el PID asociado a este botón
+    g_hash_table_insert(pending_map, button, GINT_TO_POINTER(pid));
+
+    // Cuando termine, limpiar entrada
+    g_child_watch_add(pid, on_pending_exit, button);
 }
+
 
 /**
  * quit para ventana de menu
@@ -118,6 +162,8 @@ int main(int argc, char *argv[])
     // proveedor de styling
     GtkCssProvider *style_provider = gtk_css_provider_new();
     GError *error_style = NULL;
+
+    pending_map = g_hash_table_new(g_direct_hash, g_direct_equal); 
 
     // load de proveedor de styling
     gtk_css_provider_load_from_path(style_provider, "src/style.css", &error_style);
