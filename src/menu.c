@@ -20,16 +20,16 @@ static void launch_pending(GtkButton *button, gpointer user_data);
 static void child_setup_func(gpointer user_data);
 
 //antiTorres
-static void on_pending_exit(GPid pid, gint status, gpointer data) {
-    (void)status;
-    GtkButton *button = GTK_BUTTON(data);
+// static void on_pending_exit(GPid pid, gint status, gpointer data) {
+//     (void)status;
+//     GtkButton *button = GTK_BUTTON(data);
 
-    if (g_hash_table_lookup(pending_map, button) == GINT_TO_POINTER(pid)) {
-        g_hash_table_remove(pending_map, button);
-    }
+//     if (g_hash_table_lookup(pending_map, button) == GINT_TO_POINTER(pid)) {
+//         g_hash_table_remove(pending_map, button);
+//     }
 
-    g_spawn_close_pid(pid);
-}
+//     g_spawn_close_pid(pid);
+// }
 
 
 //antiTorres2.0
@@ -44,11 +44,11 @@ static void on_pending_exit(GPid pid, gint status, gpointer data) {
 
 
 /* El hijo se vuelve líder de su propio grupo para poder matar su descendencia */
-static void child_setup_func(gpointer user_data) {
-    (void)user_data;
-    /* En el hijo: nuevo grupo de procesos con PGID = PID del hijo */
-    setpgid(0, 0);
-}
+// static void child_setup_func(gpointer user_data) {
+//     (void)user_data;
+//     /* En el hijo: nuevo grupo de procesos con PGID = PID del hijo */
+//     setpgid(0, 0);
+// }
 
 /**
  * funcion destructura de ventana
@@ -72,60 +72,20 @@ static void on_destroy(GtkWidget *w, gpointer data) {
 
 
 /**
- * funcion de accion para abrir widget de pending
+ * funcion de accion para abrir widget de pending usando system()
  */
 static void launch_pending(GtkButton *button, gpointer user_data) {
+    (void)button;
     (void)user_data;
 
-    GPid existing_pid = GPOINTER_TO_INT(g_hash_table_lookup(pending_map, button));
-    if (existing_pid > 0) {
-    GtkWidget *dialog = gtk_message_dialog_new(
-        GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))), // parent
-        GTK_DIALOG_MODAL,
-        GTK_MESSAGE_WARNING,
-        GTK_BUTTONS_OK,
-        "Ya hay un 'pending' corriendo para este botón (PID=%d)",
-        existing_pid
-    );
+    // Llamada a pending.glade, ahora con system
+    int ret = system("./bin/pending &"); 
 
-    gtk_style_context_add_class(
-    gtk_widget_get_style_context(dialog),
-    "warning-dialog"
-);
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
-    return;
-}
-
-
-    char *argv[] = {"./bin/pending", NULL};
-    GError *error = NULL;
-    GPid pid = 0;
-
-    gboolean ok = g_spawn_async(
-         NULL,
-         argv,
-         NULL,
-         G_SPAWN_DO_NOT_REAP_CHILD,
-         child_setup_func,
-         NULL,
-         &pid,
-         &error
-    );       
-
-    if (!ok) {
-        g_printerr("No se pudo lanzar pending: %s\n",
-                   (error && error->message) ? error->message : "error desconocido");
-        if (error) g_clear_error(&error);
-        return;
+    if (ret == -1) {
+        g_printerr("Error al ejecutar pending con system()\n");
     }
-
-    // Guardar el PID asociado a este botón
-    g_hash_table_insert(pending_map, button, GINT_TO_POINTER(pid));
-
-    // Cuando termine, limpiar entrada
-    g_child_watch_add(pid, on_pending_exit, button);
 }
+
 
 
 /**
