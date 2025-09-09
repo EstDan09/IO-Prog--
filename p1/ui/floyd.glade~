@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with Glade -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+
+  <!-- Adjustment for number of nodes -->
+  <object class="GtkAdjustment" id="nodes_adjustment">
+    <property name="lower">2</property>
+    <property name="upper">20</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">1</property>
+    <property name="value">4</property>
+  </object>
+
+  <object class="GtkWindow" id="main_window">
+    <property name="title">Floyd Shortest Path</property>
+    <property name="default-width">600</property>
+    <property name="default-height">400</property>
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+
+    <child>
+      <object class="GtkBox" id="main_box">
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+        <property name="margin">12</property>
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+
+        <!-- Controls row -->
+        <child>
+          <object class="GtkBox" id="controls_box">
+            <property name="orientation">horizontal</property>
+            <property name="spacing">6</property>
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+
+            <child>
+              <object class="GtkLabel" id="nodes_label">
+                <property name="label">Number of nodes:</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+
+            <child>
+              <object class="GtkSpinButton" id="nodes_spin">
+                <property name="adjustment">nodes_adjustment</property>
+                <property name="numeric">True</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+
+            <child>
+              <object class="GtkButton" id="create_button">
+                <property name="label">Create Matrix</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+
+            <child>
+              <object class="GtkButton" id="run_button">
+                <property name="label">Run Floyd</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+
+        <!-- Matrix area -->
+        <child>
+          <object class="GtkScrolledWindow" id="matrix_scroll">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="expand">True</property>
+            <child>
+              <object class="GtkGrid" id="matrix_grid">
+                <property name="row-spacing">4</property>
+                <property name="column-spacing">4</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+
+        <!-- Result area -->
+        <child>
+          <object class="GtkScrolledWindow" id="result_scroll">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="expand">True</property>
+            <child>
+              <object class="GtkTreeView" id="result_view">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+
+      </object>
+    </child>
+  </object>
+</interface>
