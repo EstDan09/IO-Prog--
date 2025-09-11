@@ -14,6 +14,10 @@ static GtkWidget *matrix_grid;      /* donde van los GtkEntry */
 static GtkWidget *result_view;      /* GtkTreeView con el resultado */
 static int        node_count = 0;
 static GtkWidget ***entries = NULL;
+static GtkWidget **row_user = NULL;
+static GtkWidget **col_user = NULL; // new enabezados de fil col 
+
+static void on_header_changed(GtkEditable *editable, gpointer user_data);
 
 /* =========================================================
  * Utilidades
@@ -34,11 +38,25 @@ static void clear_treeview_columns(GtkTreeView *tv) {
 }
 
 static void free_entries(void) {
-    if (!entries) return;
-    for (int i = 0; i < node_count; i++) free(entries[i]);
-    free(entries);
-    entries = NULL;
+    if (entries) {
+        for (int i = 0; i < node_count; i++) {
+            free(entries[i]);
+        }
+        free(entries);
+        entries = NULL;
+    }
+    // update para que libere encabezados as well 
+    if (row_user) {
+        free(row_user);
+        row_user = NULL;
+    }
+
+    if (col_user) {
+        free(col_user);
+        col_user = NULL;
+    }
 }
+
 
 static char **default_labels(int n) {
     char **lbl = g_new0(char*, n);
@@ -80,7 +98,7 @@ static void build_path_str(int src, int dst, int **P, int n, char **labels, GStr
  * ========================================================= */
 static void tex_write_preamble(FILE *f, const char *title) {
     fprintf(f,
-        "\\documentclass[11pt]{article}\n"
+        "\\documentclass{article}\n"
         "\\usepackage[margin=2.2cm]{geometry}\n"
         "\\usepackage{booktabs}\n"
         "\\usepackage{array}\n"
@@ -88,8 +106,11 @@ static void tex_write_preamble(FILE *f, const char *title) {
         "\\usepackage{float}\n"
         "\\usepackage[table]{xcolor}\n"
         "\\usepackage{hyperref}\n"
+        "\\usepackage[utf8]{inputenc}\n"
+        "\\usepackage{longtable,booktabs}\n"
         "\\newcommand{\\INF}{$\\infty$}\n"
         "\\title{%s}\n"
+        "\\author{Fabian Bustos - Esteban Secaida}\n"
         "\\date{\\today}\n"
         "\\begin{document}\n"
         "\\maketitle\n", title);
@@ -158,27 +179,50 @@ static void tex_table_P(FILE *f, const char *caption, int **P, int **PrevP, int 
     fprintf(f, "\\bottomrule\n\\end{tabular}\n\\end{table}\n\n");
 }
 
+/* Escape LaTeX special characters */
+static gchar *escape_latex(const char *input) {
+    if (!input) return g_strdup("");
+    GString *out = g_string_new(NULL);
+    for (const char *p = input; *p; p++) {
+        switch (*p) {
+            case '#': g_string_append(out, "\\#"); break;
+            case '$': g_string_append(out, "\\$"); break;
+            case '%': g_string_append(out, "\\%"); break;
+            case '&': g_string_append(out, "\\&"); break;
+            case '_': g_string_append(out, "\\_"); break;
+            case '{': g_string_append(out, "\\{"); break;
+            case '}': g_string_append(out, "\\}"); break;
+            case '~': g_string_append(out, "\\textasciitilde{}"); break;
+            case '^': g_string_append(out, "\\^{}"); break;
+            case '\\': g_string_append(out, "\\textbackslash{}"); break;
+            default: g_string_append_c(out, *p); break;
+        }
+    }
+    return g_string_free(out, FALSE);
+}
+
 static void tex_write_all(FILE *f,
-                          int ****Dsnaps, int ****Psnaps, /* (k) -> [n][n] */
+                          int ****Dsnaps, int ****Psnaps,
                           int n, int K,
                           char **labels)
 {
-    /* Portada / introducción mínima */
+    /* Introducción */
     fprintf(f, "\\section*{Descripción}\n");
-    fprintf(f, "Reporte automático del algoritmo de Floyd–Warshall. Se muestran D(0) y P(0), ");
+    fprintf(f, "Reporte automático del algoritmo de Floyd--Warshall. Se muestran D(0) y P(0), ");
     fprintf(f, "todas las tablas intermedias D(k) y P(k) con cambios resaltados, y el resultado final.\n\n");
 
     /* D(0) y P(0) */
-    tex_table_D(f, "D(0) – matriz de distancias inicial", (*Dsnaps)[0], NULL, n, labels, FALSE);
-    tex_table_P(f, "P(0) – matriz de siguiente salto inicial", (*Psnaps)[0], NULL, n, labels, FALSE);
+    tex_table_D(f, "D(0) -- matriz de distancias inicial", (*Dsnaps)[0], NULL, n, labels, FALSE);
+    tex_table_P(f, "P(0) -- matriz de siguiente salto inicial", (*Psnaps)[0], NULL, n, labels, FALSE);
 
-    /* Intermedias D(k), P(k) */
-    for (int k=1; k<=K; k++) {
+    /* Tablas intermedias D(k), P(k) */
+    for (int k = 1; k <= K; k++) {
         gchar *cd = g_strdup_printf("D(%d)", k);
         gchar *cp = g_strdup_printf("P(%d)", k);
         tex_table_D(f, cd, (*Dsnaps)[k], (*Dsnaps)[k-1], n, labels, TRUE);
         tex_table_P(f, cp, (*Psnaps)[k], (*Psnaps)[k-1], n, labels, TRUE);
-        g_free(cd); g_free(cp);
+        g_free(cd);
+        g_free(cp);
     }
 
     /* Resultado final */
@@ -186,28 +230,41 @@ static void tex_write_all(FILE *f,
     tex_table_D(f, "D(final)", (*Dsnaps)[K], (*Dsnaps)[K-1], n, labels, FALSE);
     tex_table_P(f, "P(final)", (*Psnaps)[K], (*Psnaps)[K-1], n, labels, FALSE);
 
-    fprintf(f, "\\subsection*{Listado de rutas (todas las parejas i \\neq j)}\n");
+    /* Listado de rutas */
+    fprintf(f, "\\subsection*{Listado de rutas (todas las parejas i $\\neq$ j)}\n");
     fprintf(f, "\\begin{longtable}{llp{0.65\\textwidth}}\n");
     fprintf(f, "\\toprule\n");
-    fprintf(f, "\\textbf{Origen} & \\textbf{Destino} & \\textbf{Ruta óptima (con saltos)}\\\\\\midrule\\\\[-1ex]\n");
+    fprintf(f, "\\textbf{Origen} & \\textbf{Destino} & \\textbf{Ruta óptima (con saltos)}\\\\\\midrule\n");
 
     int **Df = (*Dsnaps)[K];
     int **Pf = (*Psnaps)[K];
-    for (int i=0;i<n;i++) for (int j=0;j<n;j++) if (i!=j) {
-        fprintf(f, "%s & %s & ", labels[i], labels[j]);
-        if (Df[i][j] >= INF/2 || Pf[i][j] < 0) {
-            fprintf(f, "No existe ruta.\\\\\n");
-        } else {
-            GString *path = g_string_new(NULL);
-            build_path_str(i, j, Pf, n, labels, path);
-            fprintf(f, "%s (distancia = %d)\\\\\n", path->str, Df[i][j]);
-            g_string_free(path, TRUE);
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (i == j) continue;
+            fprintf(f, "%s & %s & ", escape_latex(labels[i]), escape_latex(labels[j]));
+
+            if (Df[i][j] >= INF/2 || Pf[i][j] < 0) {
+                fprintf(f, "No existe ruta.\\\\\n");
+            } else {
+                GString *path = g_string_new(NULL);
+                build_path_str(i, j, Pf, n, labels, path);
+
+                /* Replace Unicode arrow with LaTeX math arrow */
+                gchar *safe_path = g_strdup(path->str);
+                // g_strreplace_all(safe_path, "→", "$\\to$");
+
+                fprintf(f, "%s (distancia = %d)\\\\\n", safe_path, Df[i][j]);
+                g_string_free(path, TRUE);
+                g_free(safe_path);
+            }
         }
     }
 
-    fprintf(f, "\\bottomrule\n\\end{longtable}\n");
-    fprintf(f, "\\end{document}\n");
+    fprintf(f, "\\bottomrule\n\\end{longtable}\n\\end{document}");
 }
+
+
 
 /* =========================================================
  * Crear directorio reportes y compilar
@@ -223,14 +280,35 @@ static gchar* make_report_dir(void) {
     return dir;
 }
 
+// nueva version de compilador de pdf para el latex 
 static void compile_and_open_pdf(const char *dir, const char *texname) {
-    gchar *cmd = g_strdup_printf(
-        "sh -c 'cd %s && pdflatex -interaction=nonstopmode -halt-on-error %s >/dev/null 2>&1 && "
-        "(xdg-open %s.pdf >/dev/null 2>&1 || evince %s.pdf >/dev/null 2>&1 || true)'",
-        dir, texname, texname, texname);
-    (void)system(cmd);
-    g_free(cmd);
+    // Full path to PDF
+    gchar *pdfpath = g_build_filename(dir, g_strconcat(texname, ".pdf", NULL), NULL);
+
+    // Compile LaTeX
+    gchar *cmd_compile = g_strdup_printf(
+        "cd '%s' && pdflatex -interaction=nonstopmode -halt-on-error '%s.tex'",
+        dir, texname
+    );
+    int ret = system(cmd_compile);
+    g_free(cmd_compile);
+
+    if (ret != 0) {
+        g_printerr("Error: pdflatex failed with code %d\n", ret);
+        g_free(pdfpath);
+        return;
+    }
+
+    // Open PDF using xdg-open, fallback to evince
+    gchar *cmd_open = g_strdup_printf(
+        "xdg-open '%s' >/dev/null 2>&1 || evince '%s' >/dev/null 2>&1 &",
+        pdfpath, pdfpath
+    );
+    system(cmd_open);
+    g_free(cmd_open);
+    g_free(pdfpath);
 }
+
 
 /* =========================================================
  * Callbacks de UI
@@ -239,7 +317,7 @@ static void create_matrix(GtkButton *button, gpointer user_data) {
     GtkSpinButton *spin = GTK_SPIN_BUTTON(user_data);
     node_count = gtk_spin_button_get_value_as_int(spin);
 
-    /* Limpia grid anterior si existe */
+    /* Clear old grid if exists */
     if (GTK_IS_GRID(matrix_grid)) {
         GList *children = gtk_container_get_children(GTK_CONTAINER(matrix_grid));
         for (GList *it = children; it; it = it->next)
@@ -249,21 +327,111 @@ static void create_matrix(GtkButton *button, gpointer user_data) {
 
     free_entries();
 
+    /* Free old headers if needed */
+    if (row_user) { free(row_user); row_user = NULL; }
+    if (col_user) { free(col_user); col_user = NULL; }
+
+    /* Allocate headers */
+    row_user = malloc(node_count * sizeof(GtkWidget *));
+    col_user = malloc(node_count * sizeof(GtkWidget *));
+
+    /* Allocate entries matrix */
     entries = malloc(node_count * sizeof(GtkWidget **));
     for (int i = 0; i < node_count; i++) {
         entries[i] = malloc(node_count * sizeof(GtkWidget *));
+    }
+
+    /* ---- Create column headers ---- */
+    for (int j = 0; j < node_count; j++) {
+        char label[8];
+        snprintf(label, sizeof(label), "%c", 'A' + j);
+        GtkWidget *header = gtk_entry_new();
+        gtk_entry_set_text(GTK_ENTRY(header), label);
+        gtk_editable_set_editable(GTK_EDITABLE(header), TRUE);
+        gtk_widget_set_size_request(header, 50, 30);
+        gtk_grid_attach(GTK_GRID(matrix_grid), header, j + 1, 0, 1, 1);
+        col_user[j] = header;
+
+        g_signal_connect(header, "changed", G_CALLBACK(on_header_changed), GINT_TO_POINTER(j | 0x1000)); 
+        /* 0x1000 marks column */
+    }
+
+    /* ---- Create row headers ---- */
+    for (int i = 0; i < node_count; i++) {
+        char label[8];
+        snprintf(label, sizeof(label), "%c", 'A' + i);
+        GtkWidget *header = gtk_entry_new();
+        gtk_entry_set_text(GTK_ENTRY(header), label);
+        gtk_editable_set_editable(GTK_EDITABLE(header), TRUE);
+        gtk_widget_set_size_request(header, 50, 30);
+        gtk_grid_attach(GTK_GRID(matrix_grid), header, 0, i + 1, 1, 1);
+        row_user[i] = header;
+
+        g_signal_connect(header, "changed", G_CALLBACK(on_header_changed), GINT_TO_POINTER(i));
+        /* plain index = row */
+    }
+
+    /* ---- Create actual matrix entries ---- */
+    for (int i = 0; i < node_count; i++) {
         for (int j = 0; j < node_count; j++) {
             GtkWidget *entry = gtk_entry_new();
             gtk_widget_set_size_request(entry, 50, 30);
-            gtk_entry_set_text(GTK_ENTRY(entry), (i==j) ? "0" : "INF");
-            gtk_grid_attach(GTK_GRID(matrix_grid), entry, j, i, 1, 1);
+            gtk_entry_set_text(GTK_ENTRY(entry), (i == j) ? "0" : "INF");
+            gtk_grid_attach(GTK_GRID(matrix_grid), entry, j + 1, i + 1, 1, 1);
             entries[i][j] = entry;
         }
     }
 
     gtk_widget_show_all(matrix_grid);
+
     if (GTK_IS_TREE_VIEW(result_view))
         clear_treeview_columns(GTK_TREE_VIEW(result_view));
+}
+
+/* ---- Sync headers ---- */
+static void on_header_changed(GtkEditable *editable, gpointer user_data) {
+    int idx = GPOINTER_TO_INT(user_data);
+
+    if (idx & 0x1000) {
+        /* Column header changed */
+        idx &= 0x0FFF;
+        const char *text = gtk_entry_get_text(GTK_ENTRY(col_user[idx]));
+
+        /* Block row signal */
+        g_signal_handlers_block_by_func(row_user[idx], on_header_changed, GINT_TO_POINTER(idx));
+        gtk_entry_set_text(GTK_ENTRY(row_user[idx]), text);
+        g_signal_handlers_unblock_by_func(row_user[idx], on_header_changed, GINT_TO_POINTER(idx));
+    } else {
+        /* Row header changed */
+        const char *text = gtk_entry_get_text(GTK_ENTRY(row_user[idx]));
+
+        /* Block column signal */
+        g_signal_handlers_block_by_func(col_user[idx], on_header_changed, GINT_TO_POINTER(idx | 0x1000));
+        gtk_entry_set_text(GTK_ENTRY(col_user[idx]), text);
+        g_signal_handlers_unblock_by_func(col_user[idx], on_header_changed, GINT_TO_POINTER(idx | 0x1000));
+    }
+}
+
+char **entries_to_labels(GtkWidget **entries, int n) {
+    if (!entries || n <= 0) return NULL;
+
+    char **labels = malloc(n * sizeof(char*));
+    if (!labels) return NULL;
+
+    for (int i = 0; i < n; i++) {
+        const char *text = gtk_entry_get_text(GTK_ENTRY(entries[i]));
+        labels[i] = g_strdup(text ? text : "");  // Make a copy of the text
+    }
+    return labels;
+}
+
+/**
+ * Free a char** array returned by entries_to_labels.
+ */
+void free_labels_array(char **labels, int n) {
+    if (!labels) return;
+    for (int i = 0; i < n; i++) g_free(labels[i]);
+    free(labels);
 }
 
 static void run_floyd(GtkButton *button, gpointer user_data) {
@@ -281,7 +449,13 @@ static void run_floyd(GtkButton *button, gpointer user_data) {
     }
 
     /* Etiquetas (A..H por ahora) */
-    char **labels = default_labels(n);
+    // char **labels = default_labels(n);
+// Convert row headers to labels for LaTeX
+    char **labels = entries_to_labels(row_user, n);
+
+// // Use `labels` in tex_write_all
+// tex_write_all(f, Dsnaps, Psnaps, node_count, K, labels);
+
 
     /* Snapshots: D(0..n), P(0..n) */
     int ***D = g_new0(int**, n+1);
