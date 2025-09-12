@@ -15,9 +15,13 @@ static GtkWidget *result_view;      /* GtkTreeView con el resultado */
 static int        node_count = 0;
 static GtkWidget ***entries = NULL;
 static GtkWidget **row_user = NULL;
-static GtkWidget **col_user = NULL; // new enabezados de fil col 
+static GtkWidget **col_user = NULL; // new enabezados de fil col editables
 
 static void on_header_changed(GtkEditable *editable, gpointer user_data);
+static gchar *escape_latex(const char *input);
+static void tex_write_graph(FILE *f, int n, int **Df, int **Pf, char **labels);
+
+
 
 /* =========================================================
  * Utilidades
@@ -96,7 +100,14 @@ static void build_path_str(int src, int dst, int **P, int n, char **labels, GStr
 /* =========================================================
  * Generación de LaTeX
  * ========================================================= */
-static void tex_write_preamble(FILE *f, const char *title) {
+
+/**
+ * tex
+ * Preamble: crea el "encabezado" del archivo de latex, junto con la portada. 
+ * También incluye la info sobre Floyd ahora
+ */
+static void tex_write_preamble(FILE *f, const char *title,
+                               const char *course, const char *semester) {
     fprintf(f,
         "\\documentclass{article}\n"
         "\\usepackage[margin=2.2cm]{geometry}\n"
@@ -107,22 +118,53 @@ static void tex_write_preamble(FILE *f, const char *title) {
         "\\usepackage[table]{xcolor}\n"
         "\\usepackage{hyperref}\n"
         "\\usepackage[utf8]{inputenc}\n"
-        "\\usepackage{longtable,booktabs}\n"
+        "\\usepackage{tikz}\n"
         "\\newcommand{\\INF}{$\\infty$}\n"
-        "\\title{%s}\n"
-        "\\author{Fabian Bustos - Esteban Secaida}\n"
-        "\\date{\\today}\n"
         "\\begin{document}\n"
-        "\\maketitle\n", title);
+        "\\begin{titlepage}\n"
+        "  \\centering\n"
+        "  \\vfill\n"
+        "  {\\Huge %s}\\par\n"                     
+        "  \\vspace{1cm}\n"
+        "  {\\Large Curso: %s}\\par\n"            
+        "  {\\Large Semestre: %s}\\par\n"         
+        "  \\vfill\n"
+        "  {\\Large Autores: Fabian Bustos - Esteban Secaida}\\par\n"
+        "  \\vspace{1cm}\n"
+        "  {\\large Fecha: \\today}\\par\n"
+        "  \\vfill\n"
+        "\\end{titlepage}\n\n",
+        title, course, semester
+    );
+    /* Algoritmo de Floyd section */
+    fprintf(f, "\\section*{Algoritmo de Floyd}\n");
+    fprintf(f, "El algoritmo de Floyd, también conocido como Floyd--Warshall, "
+            "es un método para encontrar las distancias más cortas entre todos "
+            "los pares de nodos en un grafo ponderado, dirigido o no dirigido. "
+            "Funciona de manera iterativa, actualizando las distancias considerando "
+            "cada nodo como un posible punto intermedio entre pares de nodos.\n\n");
+
+    fprintf(f, "El algoritmo fue propuesto por Robert W. Floyd en 1962, quien "
+            "contribuyó significativamente al campo de la informática teórica y "
+            "la optimización de algoritmos de grafos. La esencia de su trabajo "
+            "reside en su simplicidad y eficacia para grafos densos.\n\n");
+
 }
 
+/**
+ * tex
+ * Write de labels de columnas y filas
+ */
 static void tex_write_labels_row(FILE *f, char **labels, int n) {
     fprintf(f, " & ");
     for (int j=0;j<n;j++) {
         fprintf(f, "\\textbf{%s}%s", labels[j], (j+1<n)?" & ":"\\\\\\midrule\n");
     }
 }
-
+/**
+ * tex
+ * Write de tabla D 
+ */
 static void tex_table_D(FILE *f, const char *caption, int **M, int **Prev, int n, char **labels, gboolean highlight) {
     fprintf(f, "\\begin{table}[H]\\centering\n");
     fprintf(f, "\\caption{%s}\n", caption);
@@ -151,6 +193,10 @@ static void tex_table_D(FILE *f, const char *caption, int **M, int **Prev, int n
     fprintf(f, "\\bottomrule\n\\end{tabular}\n\\end{table}\n\n");
 }
 
+/**
+ * tex
+ * Write de Tabla P
+ */
 static void tex_table_P(FILE *f, const char *caption, int **P, int **PrevP, int n, char **labels, gboolean highlight) {
     fprintf(f, "\\begin{table}[H]\\centering\n");
     fprintf(f, "\\caption{%s}\n", caption);
@@ -179,7 +225,51 @@ static void tex_table_P(FILE *f, const char *caption, int **P, int **PrevP, int 
     fprintf(f, "\\bottomrule\n\\end{tabular}\n\\end{table}\n\n");
 }
 
-/* Escape LaTeX special characters */
+/**
+ * tex
+ * Write de Grafo de Problema Floyd 
+ * new: función de que detecte rutas "mutuas" para curvar la flecha 
+ * para evitar que los pesos de cada ruta queden uno encima del otro 
+ * inspo: https://latexdraw.com/tikz-shapes-circle/
+ */
+static void tex_write_graph(FILE *f, int n, int **Df, int **Pf, char **labels) {
+    fprintf(f, "\\section*{Problema: Grafo de rutas}\n");
+    fprintf(f, "\\begin{tikzpicture}[->, >=stealth, node distance=2cm, every node/.style={circle, draw}]\n");
+
+    // posiciona los nodos en un círculo
+    for (int i = 0; i < n; i++) {
+        fprintf(f, "\\node (%d) at (%d*360/%d:3cm) {%s};\n", 
+                i, i, n, labels[i]);
+    }
+
+    // dibujar edges de grafo
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (i == j) continue;
+            if (Df[i][j] < INF/2) {
+                if (Df[j][i] < INF/2 && i < j) {
+                    // si ruta es mutua, "curvear" la flechas para cada lado para que no choquen
+                    fprintf(f, "\\draw (%d) to[bend left] node[above] {%d} (%d);\n", i, Df[i][j], j);
+                    fprintf(f, "\\draw (%d) to[bend left] node[below] {%d} (%d);\n", j, Df[j][i], i);
+                } else if (Df[j][i] >= INF/2) {
+                    // ruta singular, peso va encima
+                    fprintf(f, "\\draw (%d) -- node[above] {%d} (%d);\n", i, Df[i][j], j);
+                }
+            }
+        }
+    }
+
+    fprintf(f, "\\end{tikzpicture}\n");
+}
+
+
+/**
+ * tex
+ * Función que nació porque pensé que ls caracteres "especiales" estaban quebrando el latex
+ * Resultó que no era eso, pero quedó como validador por si acaso
+ * Culpable: https://stackoverflow.com/questions/2541616/how-to-escape-strip-special-characters-in-the-latex-document
+ * y yo, por usar stackoverflow
+ */
 static gchar *escape_latex(const char *input) {
     if (!input) return g_strdup("");
     GString *out = g_string_new(NULL);
@@ -201,19 +291,27 @@ static gchar *escape_latex(const char *input) {
     return g_string_free(out, FALSE);
 }
 
+/***
+ * tex
+ * Write del cuerpo principal del documento Latex
+ */
 static void tex_write_all(FILE *f,
                           int ****Dsnaps, int ****Psnaps,
                           int n, int K,
                           char **labels)
 {
+    // DIBUJO DE GRAFO ACA PARA INICIAL
+    tex_write_graph(f, n, (*Dsnaps)[0], (*Psnaps)[0], labels);
+    
     /* Introducción */
-    fprintf(f, "\\section*{Descripción}\n");
+    fprintf(f, "\\section*{Tablas Iniciales}\n");
     fprintf(f, "Reporte automático del algoritmo de Floyd--Warshall. Se muestran D(0) y P(0), ");
     fprintf(f, "todas las tablas intermedias D(k) y P(k) con cambios resaltados, y el resultado final.\n\n");
-
     /* D(0) y P(0) */
     tex_table_D(f, "D(0) -- matriz de distancias inicial", (*Dsnaps)[0], NULL, n, labels, FALSE);
     tex_table_P(f, "P(0) -- matriz de siguiente salto inicial", (*Psnaps)[0], NULL, n, labels, FALSE);
+    
+    fprintf(f, "\\section*{Tablas Intermedias}\n");
 
     /* Tablas intermedias D(k), P(k) */
     for (int k = 1; k <= K; k++) {
@@ -269,6 +367,12 @@ static void tex_write_all(FILE *f,
 /* =========================================================
  * Crear directorio reportes y compilar
  * ========================================================= */
+
+/**
+ * doc
+ * genera el directorio donde se hacen los reportes de floyd
+ * Utiliza fecha y hora actual
+ */
 static gchar* make_report_dir(void) {
     time_t t = time(NULL);
     struct tm tmv;
@@ -280,12 +384,14 @@ static gchar* make_report_dir(void) {
     return dir;
 }
 
-// nueva version de compilador de pdf para el latex 
+/**
+ * doc
+ * compila el latex y lo abre en modo presentación
+ */
 static void compile_and_open_pdf(const char *dir, const char *texname) {
-    // Full path to PDF
     gchar *pdfpath = g_build_filename(dir, g_strconcat(texname, ".pdf", NULL), NULL);
 
-    // Compile LaTeX
+    // compila latex
     gchar *cmd_compile = g_strdup_printf(
         "cd '%s' && pdflatex -interaction=nonstopmode -halt-on-error '%s.tex'",
         dir, texname
@@ -294,16 +400,16 @@ static void compile_and_open_pdf(const char *dir, const char *texname) {
     g_free(cmd_compile);
 
     if (ret != 0) {
-        g_printerr("Error: pdflatex failed with code %d\n", ret);
+        g_printerr("Error: pdflatex falló: %d\n", ret);
         g_free(pdfpath);
         return;
     }
 
-    // Open PDF using xdg-open, fallback to evince
+    // usa evince para abrir doc en modo presentación 
     gchar *cmd_open = g_strdup_printf(
-        "xdg-open '%s' >/dev/null 2>&1 || evince '%s' >/dev/null 2>&1 &",
-        pdfpath, pdfpath
-    );
+    "evince --presentation '%s' >/dev/null 2>&1 &",
+    pdfpath
+);
     system(cmd_open);
     g_free(cmd_open);
     g_free(pdfpath);
@@ -313,11 +419,15 @@ static void compile_and_open_pdf(const char *dir, const char *texname) {
 /* =========================================================
  * Callbacks de UI
  * ========================================================= */
+/**
+ * UI
+ * Crea la matriz para el glade 
+ */
 static void create_matrix(GtkButton *button, gpointer user_data) {
     GtkSpinButton *spin = GTK_SPIN_BUTTON(user_data);
     node_count = gtk_spin_button_get_value_as_int(spin);
 
-    /* Clear old grid if exists */
+    // libera grid viejo si existe 
     if (GTK_IS_GRID(matrix_grid)) {
         GList *children = gtk_container_get_children(GTK_CONTAINER(matrix_grid));
         for (GList *it = children; it; it = it->next)
@@ -325,25 +435,28 @@ static void create_matrix(GtkButton *button, gpointer user_data) {
         g_list_free(children);
     }
 
+    // libera entries 
     free_entries();
 
-    /* Free old headers if needed */
+    // libera headers por si acaso
     if (row_user) { free(row_user); row_user = NULL; }
     if (col_user) { free(col_user); col_user = NULL; }
 
-    /* Allocate headers */
+    // crea headers que puedan ser modificados por el usuario 
     row_user = malloc(node_count * sizeof(GtkWidget *));
     col_user = malloc(node_count * sizeof(GtkWidget *));
 
-    /* Allocate entries matrix */
+    // alloc de entradas de la matriz
     entries = malloc(node_count * sizeof(GtkWidget **));
     for (int i = 0; i < node_count; i++) {
         entries[i] = malloc(node_count * sizeof(GtkWidget *));
     }
 
-    /* ---- Create column headers ---- */
+    // creación de encabezados de columnas
     for (int j = 0; j < node_count; j++) {
         char label[8];
+
+        // esto escribe el nombre en un formato correcto para que latex no se queje 
         snprintf(label, sizeof(label), "%c", 'A' + j);
         GtkWidget *header = gtk_entry_new();
         gtk_entry_set_text(GTK_ENTRY(header), label);
@@ -352,11 +465,12 @@ static void create_matrix(GtkButton *button, gpointer user_data) {
         gtk_grid_attach(GTK_GRID(matrix_grid), header, j + 1, 0, 1, 1);
         col_user[j] = header;
 
+        // detector de cambios en los nombres de encabezados 
         g_signal_connect(header, "changed", G_CALLBACK(on_header_changed), GINT_TO_POINTER(j | 0x1000)); 
-        /* 0x1000 marks column */
+        // 0x1000 para columna
     }
 
-    /* ---- Create row headers ---- */
+    // creación de encabezados de filas
     for (int i = 0; i < node_count; i++) {
         char label[8];
         snprintf(label, sizeof(label), "%c", 'A' + i);
@@ -368,10 +482,9 @@ static void create_matrix(GtkButton *button, gpointer user_data) {
         row_user[i] = header;
 
         g_signal_connect(header, "changed", G_CALLBACK(on_header_changed), GINT_TO_POINTER(i));
-        /* plain index = row */
     }
 
-    /* ---- Create actual matrix entries ---- */
+    // creación de entries de matriz 
     for (int i = 0; i < node_count; i++) {
         for (int j = 0; j < node_count; j++) {
             GtkWidget *entry = gtk_entry_new();
@@ -388,30 +501,39 @@ static void create_matrix(GtkButton *button, gpointer user_data) {
         clear_treeview_columns(GTK_TREE_VIEW(result_view));
 }
 
-/* ---- Sync headers ---- */
+/**
+ * UI
+ * Detecta los cambios en los nombres de los encabezados 
+ * signal blockers: https://docs.gtk.org/gobject/func.signal_handlers_block_by_func.html
+ */
 static void on_header_changed(GtkEditable *editable, gpointer user_data) {
     int idx = GPOINTER_TO_INT(user_data);
 
     if (idx & 0x1000) {
-        /* Column header changed */
+        // cambia columna
         idx &= 0x0FFF;
         const char *text = gtk_entry_get_text(GTK_ENTRY(col_user[idx]));
 
-        /* Block row signal */
+        // block señal de fila
         g_signal_handlers_block_by_func(row_user[idx], on_header_changed, GINT_TO_POINTER(idx));
         gtk_entry_set_text(GTK_ENTRY(row_user[idx]), text);
         g_signal_handlers_unblock_by_func(row_user[idx], on_header_changed, GINT_TO_POINTER(idx));
     } else {
-        /* Row header changed */
+        // viceversa
+        // cambia header fila
         const char *text = gtk_entry_get_text(GTK_ENTRY(row_user[idx]));
 
-        /* Block column signal */
+        // block señal columna
         g_signal_handlers_block_by_func(col_user[idx], on_header_changed, GINT_TO_POINTER(idx | 0x1000));
         gtk_entry_set_text(GTK_ENTRY(col_user[idx]), text);
         g_signal_handlers_unblock_by_func(col_user[idx], on_header_changed, GINT_TO_POINTER(idx | 0x1000));
     }
 }
 
+/**
+ * UI
+ * Transforma el widget de labels de encabezados a char para el latex
+ */
 char **entries_to_labels(GtkWidget **entries, int n) {
     if (!entries || n <= 0) return NULL;
 
@@ -420,13 +542,14 @@ char **entries_to_labels(GtkWidget **entries, int n) {
 
     for (int i = 0; i < n; i++) {
         const char *text = gtk_entry_get_text(GTK_ENTRY(entries[i]));
-        labels[i] = g_strdup(text ? text : "");  // Make a copy of the text
+        labels[i] = g_strdup(text ? text : "");  
     }
     return labels;
 }
 
 /**
- * Free a char** array returned by entries_to_labels.
+ * UI
+ * Libera el array de entradas
  */
 void free_labels_array(char **labels, int n) {
     if (!labels) return;
@@ -434,11 +557,15 @@ void free_labels_array(char **labels, int n) {
     free(labels);
 }
 
+/**
+ * FLOYD
+ * Función principal de ejecución de floyd
+ */
 static void run_floyd(GtkButton *button, gpointer user_data) {
     if (node_count <= 0 || !entries) return;
     int n = node_count;
 
-    /* Lee matriz desde la UI */
+    // lee matriz desde la UI
     int **dist = g_new0(int*, n);
     for (int i = 0; i < n; i++) {
         dist[i] = g_new0(int, n);
@@ -448,13 +575,9 @@ static void run_floyd(GtkButton *button, gpointer user_data) {
         }
     }
 
-    /* Etiquetas (A..H por ahora) */
-    // char **labels = default_labels(n);
-// Convert row headers to labels for LaTeX
+    // convierte encabezados a labels normales para latex 
     char **labels = entries_to_labels(row_user, n);
 
-// // Use `labels` in tex_write_all
-// tex_write_all(f, Dsnaps, Psnaps, node_count, K, labels);
 
 
     /* Snapshots: D(0..n), P(0..n) */
@@ -502,6 +625,7 @@ static void run_floyd(GtkButton *button, gpointer user_data) {
     }
 
     /* Muestra D(final) en el TreeView */
+    // sección de resultados en el Glade 
     int **Df = D[n];
     GType *types = g_new0(GType, n);
     for (int c = 0; c < n; c++) types[c] = G_TYPE_STRING;
@@ -521,11 +645,13 @@ static void run_floyd(GtkButton *button, gpointer user_data) {
             }
         }
     }
+
+    // se usa  Tree View para mostrar resultado
     gtk_tree_view_set_model(GTK_TREE_VIEW(result_view), GTK_TREE_MODEL(store));
     g_object_unref(store);
     clear_treeview_columns(GTK_TREE_VIEW(result_view));
     for (int j = 0; j < n; j++) {
-        gchar *title = g_strdup_printf("Node %s", labels[j]);
+        gchar *title = g_strdup_printf("Nodo %s", labels[j]);
         GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
         GtkTreeViewColumn *col =
             gtk_tree_view_column_new_with_attributes(title, renderer, "text", j, NULL);
@@ -538,7 +664,7 @@ static void run_floyd(GtkButton *button, gpointer user_data) {
     gchar *texpath = g_build_filename(dir, "floyd.tex", NULL);
     FILE *f = fopen(texpath, "w");
     if (f) {
-        tex_write_preamble(f, "Proyecto 1 – Floyd–Warshall");
+        tex_write_preamble(f, "Proyecto 1 - Rutas Òptimas Algoritmo de Floyd", "Investigación de Operaciones", "II Semestre 2025");
         int ****Dsnaps = (int****)&D;
         int ****Psnaps = (int****)&P;
         tex_write_all(f, Dsnaps, Psnaps, n, n, labels);
@@ -561,7 +687,11 @@ static void run_floyd(GtkButton *button, gpointer user_data) {
     g_free(D); g_free(P);
     free_labels(labels, n);
 }
-
+/**
+ * DOCS
+ * Usa File Chooser para guardar archivos de Floyd
+ * Dpcumentación: https://lazka.github.io/pgi-docs/Gtk-3.0/interfaces/FileChooser.html
+ */
 static void on_save_clicked(GtkButton *b, gpointer user_data) {
     (void)b; (void)user_data;
     if (node_count <= 0 || !entries) return;
@@ -569,7 +699,7 @@ static void on_save_clicked(GtkButton *b, gpointer user_data) {
     g_mkdir_with_parents("cases", 0755);
 
     GtkWidget *dlg = gtk_file_chooser_dialog_new(
-        "Save Floyd Case", NULL, GTK_FILE_CHOOSER_ACTION_SAVE,
+        "Save Floyd ", NULL, GTK_FILE_CHOOSER_ACTION_SAVE,
         "_Cancel", GTK_RESPONSE_CANCEL, "_Save", GTK_RESPONSE_ACCEPT, NULL);
 
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dlg), TRUE);
@@ -581,7 +711,7 @@ static void on_save_clicked(GtkButton *b, gpointer user_data) {
         FILE *f = fopen(fname, "w");
         if (!f) {
             GtkWidget *m = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
-                                                  "Could not open file for writing:\n%s", fname);
+                                                  "Error de abrir archivo:\n%s", fname);
             gtk_dialog_run(GTK_DIALOG(m)); gtk_widget_destroy(m);
             g_free(fname); gtk_widget_destroy(dlg); return;
         }
@@ -603,6 +733,10 @@ static void on_save_clicked(GtkButton *b, gpointer user_data) {
     gtk_widget_destroy(dlg);
 }
 
+/**
+ * DOCS
+ * File chooser para abrir archivos guardados
+ */
 static void on_load_clicked(GtkButton *b, gpointer user_data) {
     GtkSpinButton *spin = GTK_SPIN_BUTTON(user_data);
 
@@ -628,7 +762,7 @@ static void on_load_clicked(GtkButton *b, gpointer user_data) {
             char line[128] = {0};
             if (!fgets(line, sizeof line, f) || sscanf(line, "N=%d", &n) != 1 || n <= 0) {
                 GtkWidget *m = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
-                    "Invalid file (missing or bad N=).");
+                    "Invalido file.");
                 gtk_dialog_run(GTK_DIALOG(m)); gtk_widget_destroy(m);
                 fclose(f); g_free(fname); gtk_widget_destroy(dlg); return;
             }
@@ -638,13 +772,14 @@ static void on_load_clicked(GtkButton *b, gpointer user_data) {
             fseek(f, pos, SEEK_SET);
             if (fscanf(f, "%d", &n) != 1 || n <= 0) {
                 GtkWidget *m = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
-                    "Invalid file format (missing N).");
+                    "Invalido file");
                 gtk_dialog_run(GTK_DIALOG(m)); gtk_widget_destroy(m);
                 fclose(f); g_free(fname); gtk_widget_destroy(dlg); return;
             }
         }
 
         gtk_spin_button_set_value(spin, n);
+        // crea matriz nueva a partir de archivo
         create_matrix(NULL, spin);
 
         for (int i = 0; i < n; i++) {
@@ -666,9 +801,9 @@ static void on_load_clicked(GtkButton *b, gpointer user_data) {
     gtk_widget_destroy(dlg);
 }
 
-/* =========================================================
- * main: crea/encuentra widgets de Glade y conecta señales
- * ========================================================= */
+/***
+ * Main
+ */
 int main(int argc, char *argv[]) {
     /* si nos lanzaron desde el menú con FLOYD_PIDFILE, escribe tu PID */
     const char *pidpath = g_getenv("FLOYD_PIDFILE");
@@ -684,17 +819,15 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    g_message("Cargando UI: %s", argv[1]);
     GtkBuilder *builder = gtk_builder_new_from_file(argv[1]);
     if (!builder) { g_printerr("Error: Could not load UI file %s\n", argv[1]); return 1; }
 
     GtkWidget *window = GTK_WIDGET(gtk_builder_get_object(builder, "main_window"));
     if (!window) { g_printerr("No se encontró 'main_window' en el .glade\n"); return 1; }
 
-    /* matrix_grid: si falta, créalo dentro de matrix_view o matrix_scroll_window */
+    /* matrix_grid: si falta, crear dentro matrix_scroll_window */
     matrix_grid = GTK_WIDGET(gtk_builder_get_object(builder, "matrix_grid"));
     if (!GTK_IS_GRID(matrix_grid)) {
-        g_message("[FLOYD] 'matrix_grid' no encontrado o no es GtkGrid. Creando uno nuevo...");
         matrix_grid = gtk_grid_new();
         gtk_grid_set_row_spacing(GTK_GRID(matrix_grid), 4);
         gtk_grid_set_column_spacing(GTK_GRID(matrix_grid), 4);
@@ -710,7 +843,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /* result_view: asegúrate de tener un TreeView dentro de result_scroll */
+    // vista de resultado result_view
     result_view = GTK_WIDGET(gtk_builder_get_object(builder, "result_view"));
     if (!GTK_IS_TREE_VIEW(result_view)) {
         GtkWidget *scroll = GTK_WIDGET(gtk_builder_get_object(builder, "result_scroll"));

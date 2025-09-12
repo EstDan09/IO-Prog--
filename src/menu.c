@@ -82,17 +82,6 @@ static void launch_pending(GtkButton *button, gpointer user_data)
 {
     (void)user_data;
 
-    GPid existing_pid = GPOINTER_TO_INT(g_hash_table_lookup(pending_map, button));
-    if (existing_pid > 0)
-    {
-        GtkWidget *dialog = gtk_message_dialog_new(
-            GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))),
-            GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK,
-            "Ya hay un 'pending' corriendo para este botón (PID=%d)", existing_pid);
-        gtk_dialog_run(GTK_DIALOG(dialog));
-        gtk_widget_destroy(dialog);
-        return;
-    }
 
     char *argv[] = {"./bin/pending", NULL};
     GError *error = NULL;
@@ -118,66 +107,33 @@ static void launch_pending(GtkButton *button, gpointer user_data)
     }
 
     /* Guardar el PID asociado a este botón y registrar watch */
-    g_hash_table_insert(pending_map, button, GINT_TO_POINTER(pid));
-    g_child_watch_add(pid, on_pending_exit, button);
+    // g_hash_table_insert(pending_map, button, GINT_TO_POINTER(pid));
+    // g_child_watch_add(pid, on_pending_exit, button);
 }
 
 /* ===== Lanzar Floyd con system() + setsid + pidfile ===== */
 static void launch_floyd(GtkButton *button, gpointer user_data)
 {
-    (void)user_data;
+    (void)button;      // unused
+    (void)user_data;   // unused
 
-    GPid existing_pid = GPOINTER_TO_INT(g_hash_table_lookup(pending_map, button));
-    if (existing_pid > 0) {
-        GtkWidget *dialog = gtk_message_dialog_new(
-            GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))),
-            GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK,
-            "Ya hay un 'floyd' corriendo para este botón (PID=%d)", existing_pid);
-        gtk_dialog_run(GTK_DIALOG(dialog));
-        gtk_widget_destroy(dialog);
-        return;
-    }
-
-    /* pidfile único por botón */
-    char pidfile[256];
-    g_snprintf(pidfile, sizeof pidfile, "/tmp/floyd_%ld_%p.pid", (long)getpid(), (void*)button);
-    unlink(pidfile);
-
-    /* Rutas (usa las de tu Makefile) */
     const char *bin   = "./bin/floyd";
     const char *glade = "p1/ui/floyd.glade";
 
-    /* Exporta FLOYD_PIDFILE y, además, guarda $! en el mismo pidfile */
-    char cmd[1024];
-    g_snprintf(cmd, sizeof cmd,
-        "sh -c \"export FLOYD_PIDFILE='%s'; "
-        "setsid '%s' '%s' </dev/null >/dev/null 2>&1 & "
-        "echo $! > '%s'\"",
-        pidfile, bin, glade, pidfile);
+    // Launch the program in the background detached from this GTK app
+    char cmd[512];
+    g_snprintf(cmd, sizeof(cmd),
+               "setsid '%s' '%s' </dev/null >/dev/null 2>&1 &",
+               bin, glade);
 
     int ret = system(cmd);
     if (ret == -1) {
-        g_printerr("Error al ejecutar system(): %s\n", g_strerror(errno));
-        return;
+        g_printerr("Error launching floyd: %s\n", g_strerror(errno));
+    } else {
+        g_message("Floyd launched successfully.");
     }
-
-    /* Espera breve a que se escriba el pidfile */
-    GPid pid = 0;
-    for (int i = 0; i < 100; i++) {  /* ~2 s */
-        pid = read_pidfile(pidfile);
-        if (pid > 0) break;
-        usleep(20000);
-    }
-    unlink(pidfile);
-
-    if (pid <= 0) {
-        g_printerr("No se pudo leer el PID de floyd (pidfile vacío o inválido)\n");
-        return;
-    }
-
-    g_hash_table_insert(pending_map, button, GINT_TO_POINTER(pid));
-    g_message("floyd lanzado con PID %d", pid);
 }
+
 
 /* ===== Botón Salir ===== */
 static void on_quit_clicked(GtkButton *button, gpointer user_data)
