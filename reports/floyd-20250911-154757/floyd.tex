@@ -1,0 +1,204 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\newcommand{\INF}{$\infty$}
+\title{Proyecto 1 – Floyd–Warshall}
+\date{\today}
+\begin{document}
+\maketitle
+\section*{Descripción}
+Reporte automático del algoritmo de Floyd–Warshall. Se muestran D(0) y P(0), todas las tablas intermedias D(k) y P(k) con cambios resaltados, y el resultado final.
+
+\begin{table}[H]\centering
+\caption{D(0) – matriz de distancias inicial}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & 0 & 8 & \INF & \INF \\
+\textbf{B} & 4 & 0 & 5 & \INF \\
+\textbf{C} & 3 & \INF & 0 & \INF \\
+\textbf{D} & 1 & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(0) – matriz de siguiente salto inicial}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & - & B & - & - \\
+\textbf{B} & A & - & C & - \\
+\textbf{C} & A & - & - & - \\
+\textbf{D} & A & - & - & - \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(1)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & 0 & 8 & \INF & \INF \\
+\textbf{B} & 4 & 0 & 5 & \INF \\
+\textbf{C} & 3 & \cellcolor{yellow!30}11 & 0 & \INF \\
+\textbf{D} & 1 & \cellcolor{yellow!30}9 & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(1)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & \cellcolor{yellow!30}A & B & - & - \\
+\textbf{B} & A & \cellcolor{yellow!30}A & C & - \\
+\textbf{C} & A & - & \cellcolor{yellow!30}A & - \\
+\textbf{D} & A & - & - & \cellcolor{yellow!30}A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(2)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & 0 & 8 & \cellcolor{yellow!30}13 & \INF \\
+\textbf{B} & 4 & 0 & 5 & \INF \\
+\textbf{C} & 3 & 11 & 0 & \INF \\
+\textbf{D} & 1 & 9 & \cellcolor{yellow!30}14 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(2)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & A & B & \cellcolor{yellow!30}B & - \\
+\textbf{B} & A & A & C & - \\
+\textbf{C} & A & - & A & - \\
+\textbf{D} & A & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(3)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & 0 & 8 & 13 & \INF \\
+\textbf{B} & 4 & 0 & 5 & \INF \\
+\textbf{C} & 3 & 11 & 0 & \INF \\
+\textbf{D} & 1 & 9 & 14 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(3)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & A & B & B & - \\
+\textbf{B} & A & A & C & - \\
+\textbf{C} & A & - & A & - \\
+\textbf{D} & A & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(4)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & 0 & 8 & 13 & \INF \\
+\textbf{B} & 4 & 0 & 5 & \INF \\
+\textbf{C} & 3 & 11 & 0 & \INF \\
+\textbf{D} & 1 & 9 & 14 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(4)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & A & B & B & - \\
+\textbf{B} & A & A & C & - \\
+\textbf{C} & A & - & A & - \\
+\textbf{D} & A & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Distancias y rutas óptimas}
+\begin{table}[H]\centering
+\caption{D(final)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & 0 & 8 & 13 & \INF \\
+\textbf{B} & 4 & 0 & 5 & \INF \\
+\textbf{C} & 3 & 11 & 0 & \INF \\
+\textbf{D} & 1 & 9 & 14 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(final)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D}\\\midrule
+\textbf{A} & A & B & B & - \\
+\textbf{B} & A & A & C & - \\
+\textbf{C} & A & - & A & - \\
+\textbf{D} & A & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection*{Listado de rutas (todas las parejas i \neq j)}
+\begin{longtable}{llp{0.65\textwidth}}
+\toprule
+\textbf{Origen} & \textbf{Destino} & \textbf{Ruta óptima (con saltos)}\\\midrule\\[-1ex]
+A & B & A → B (distancia = 8)\\
+A & C & A → B → C (distancia = 13)\\
+A & D & No existe ruta.\\
+B & A & B → A (distancia = 4)\\
+B & C & B → C (distancia = 5)\\
+B & D & No existe ruta.\\
+C & A & C → A (distancia = 3)\\
+C & B & No existe ruta.\\
+C & D & No existe ruta.\\
+D & A & D → A (distancia = 1)\\
+D & B & No existe ruta.\\
+D & C & No existe ruta.\\
+\bottomrule
+\end{longtable}
+\end{document}
