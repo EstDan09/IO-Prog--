@@ -14,8 +14,8 @@
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="title">Floyd Shortest Path</property>
-    <property name="default-width">600</property>
-    <property name="default-height">400</property>
+    <property name="default-width">1000</property>
+    <property name="default-height">800</property>
     <child>
       <object class="GtkBox" id="main_box">
         <property name="visible">True</property>
@@ -26,12 +26,13 @@
           <object class="GtkBox" id="controls_box">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
+            <property name="margin-bottom">2</property>
             <property name="spacing">6</property>
             <child>
               <object class="GtkLabel" id="nodes_label">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="label">Number of nodes:</property>
+                <property name="label">Numero de nodos</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -54,7 +55,7 @@
             </child>
             <child>
               <object class="GtkButton" id="create_button">
-                <property name="label">Create Matrix</property>
+                <property name="label">Crear Matriz</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">False</property>
@@ -67,7 +68,7 @@
             </child>
             <child>
               <object class="GtkButton" id="run_button">
-                <property name="label">Run Floyd</property>
+                <property name="label">Ejecutar Floyd</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">False</property>
@@ -78,26 +79,45 @@
                 <property name="position">3</property>
               </packing>
             </child>
+            <child>
+              <object class="GtkButton" id="load_button">
+                <property name="label" translatable="yes">Cargar Archivo</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="save_button">
+                <property name="label" translatable="yes">Guardar Archivo</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
+            <property name="padding">8</property>
             <property name="position">0</property>
           </packing>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="matrix_scroll">
+          <object class="GtkScrolledWindow" id="matrix_scroll_window">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
-            <child>
-                <object class="GtkGrid" id="matrix_grid">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="row-spacing">4</property>
-                <property name="column-spacing">4</property>
-                </object>
-            </child>
-            </object>
+          </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>

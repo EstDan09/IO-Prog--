@@ -1,0 +1,1010 @@
+\documentclass{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\newcommand{\INF}{$\infty$}
+\begin{document}
+\begin{titlepage}
+  \centering
+  \vfill
+  {\Huge Proyecto 1 - Rutas Òptimas Algoritmo de Floyd}\par
+  \vspace{1cm}
+  {\Large Curso: Investigación de Operaciones}\par
+  {\Large Semestre: II Semestre 2025}\par
+  \vfill
+  {\Large Autores: Fabian Bustos - Esteban Secaida}\par
+  \vspace{1cm}
+  {\large Fecha: \today}\par
+  \vfill
+\end{titlepage}
+
+\section*{Algoritmo de Floyd}
+El algoritmo de Floyd, también conocido como Floyd--Warshall, es un método para encontrar las distancias más cortas entre todos los pares de nodos en un grafo ponderado, dirigido o no dirigido. Funciona de manera iterativa, actualizando las distancias considerando cada nodo como un posible punto intermedio entre pares de nodos.
+
+El algoritmo fue propuesto por Robert W. Floyd en 1962, quien contribuyó significativamente al campo de la informática teórica y la optimización de algoritmos de grafos. La esencia de su trabajo reside en su simplicidad y eficacia para grafos densos.
+
+\section*{Problema: Grafo de rutas}
+\begin{tikzpicture}[->, >=stealth, node distance=2cm, every node/.style={circle, draw}]
+\node (0) at (0*360/14:3cm) {A};
+\node (1) at (1*360/14:3cm) {B};
+\node (2) at (2*360/14:3cm) {C};
+\node (3) at (3*360/14:3cm) {D};
+\node (4) at (4*360/14:3cm) {E};
+\node (5) at (5*360/14:3cm) {F};
+\node (6) at (6*360/14:3cm) {G};
+\node (7) at (7*360/14:3cm) {H};
+\node (8) at (8*360/14:3cm) {I};
+\node (9) at (9*360/14:3cm) {J};
+\node (10) at (10*360/14:3cm) {K};
+\node (11) at (11*360/14:3cm) {L};
+\node (12) at (12*360/14:3cm) {M};
+\node (13) at (13*360/14:3cm) {N};
+\end{tikzpicture}
+\section*{Tablas Iniciales}
+Reporte automático del algoritmo de Floyd--Warshall. Se muestran D(0) y P(0), todas las tablas intermedias D(k) y P(k) con cambios resaltados, y el resultado final.
+
+\begin{table}[H]\centering
+\caption{D(0) -- matriz de distancias inicial}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(0) -- matriz de siguiente salto inicial}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Tablas Intermedias}
+\begin{table}[H]\centering
+\caption{D(1)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(1)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & \cellcolor{yellow!30}A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & \cellcolor{yellow!30}A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & \cellcolor{yellow!30}A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & \cellcolor{yellow!30}A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & \cellcolor{yellow!30}A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & \cellcolor{yellow!30}A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & \cellcolor{yellow!30}A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & \cellcolor{yellow!30}A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & \cellcolor{yellow!30}A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & \cellcolor{yellow!30}A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & \cellcolor{yellow!30}A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & \cellcolor{yellow!30}A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & \cellcolor{yellow!30}A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & \cellcolor{yellow!30}A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(2)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(2)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(3)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(3)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(4)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(4)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(5)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(5)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(6)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(6)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(7)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(7)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(8)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(8)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(9)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(9)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(10)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(10)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(11)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(11)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(12)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(12)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(13)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(13)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{D(14)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(14)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Distancias y rutas óptimas}
+\begin{table}[H]\centering
+\caption{D(final)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l r r r r r r r r r r r r r r}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{B} & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{C} & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{D} & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{E} & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{F} & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{G} & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{H} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF & \INF \\
+\textbf{I} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF & \INF \\
+\textbf{J} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF & \INF \\
+\textbf{K} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF & \INF \\
+\textbf{L} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF & \INF \\
+\textbf{M} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 & \INF \\
+\textbf{N} & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & \INF & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering
+\caption{P(final)}
+\rowcolors{2}{white}{white}
+\begin{tabular}{l c c c c c c c c c c c c c c}
+\toprule
+ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} & \textbf{L} & \textbf{M} & \textbf{N}\\\midrule
+\textbf{A} & A & - & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{B} & - & A & - & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{C} & - & - & A & - & - & - & - & - & - & - & - & - & - & - \\
+\textbf{D} & - & - & - & A & - & - & - & - & - & - & - & - & - & - \\
+\textbf{E} & - & - & - & - & A & - & - & - & - & - & - & - & - & - \\
+\textbf{F} & - & - & - & - & - & A & - & - & - & - & - & - & - & - \\
+\textbf{G} & - & - & - & - & - & - & A & - & - & - & - & - & - & - \\
+\textbf{H} & - & - & - & - & - & - & - & A & - & - & - & - & - & - \\
+\textbf{I} & - & - & - & - & - & - & - & - & A & - & - & - & - & - \\
+\textbf{J} & - & - & - & - & - & - & - & - & - & A & - & - & - & - \\
+\textbf{K} & - & - & - & - & - & - & - & - & - & - & A & - & - & - \\
+\textbf{L} & - & - & - & - & - & - & - & - & - & - & - & A & - & - \\
+\textbf{M} & - & - & - & - & - & - & - & - & - & - & - & - & A & - \\
+\textbf{N} & - & - & - & - & - & - & - & - & - & - & - & - & - & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection*{Listado de rutas (todas las parejas i $\neq$ j)}
+\begin{longtable}{llp{0.65\textwidth}}
+\toprule
+\textbf{Origen} & \textbf{Destino} & \textbf{Ruta óptima (con saltos)}\\\midrule
+A & B & No existe ruta.\\
+A & C & No existe ruta.\\
+A & D & No existe ruta.\\
+A & E & No existe ruta.\\
+A & F & No existe ruta.\\
+A & G & No existe ruta.\\
+A & H & No existe ruta.\\
+A & I & No existe ruta.\\
+A & J & No existe ruta.\\
+A & K & No existe ruta.\\
+A & L & No existe ruta.\\
+A & M & No existe ruta.\\
+A & N & No existe ruta.\\
+B & A & No existe ruta.\\
+B & C & No existe ruta.\\
+B & D & No existe ruta.\\
+B & E & No existe ruta.\\
+B & F & No existe ruta.\\
+B & G & No existe ruta.\\
+B & H & No existe ruta.\\
+B & I & No existe ruta.\\
+B & J & No existe ruta.\\
+B & K & No existe ruta.\\
+B & L & No existe ruta.\\
+B & M & No existe ruta.\\
+B & N & No existe ruta.\\
+C & A & No existe ruta.\\
+C & B & No existe ruta.\\
+C & D & No existe ruta.\\
+C & E & No existe ruta.\\
+C & F & No existe ruta.\\
+C & G & No existe ruta.\\
+C & H & No existe ruta.\\
+C & I & No existe ruta.\\
+C & J & No existe ruta.\\
+C & K & No existe ruta.\\
+C & L & No existe ruta.\\
+C & M & No existe ruta.\\
+C & N & No existe ruta.\\
+D & A & No existe ruta.\\
+D & B & No existe ruta.\\
+D & C & No existe ruta.\\
+D & E & No existe ruta.\\
+D & F & No existe ruta.\\
+D & G & No existe ruta.\\
+D & H & No existe ruta.\\
+D & I & No existe ruta.\\
+D & J & No existe ruta.\\
+D & K & No existe ruta.\\
+D & L & No existe ruta.\\
+D & M & No existe ruta.\\
+D & N & No existe ruta.\\
+E & A & No existe ruta.\\
+E & B & No existe ruta.\\
+E & C & No existe ruta.\\
+E & D & No existe ruta.\\
+E & F & No existe ruta.\\
+E & G & No existe ruta.\\
+E & H & No existe ruta.\\
+E & I & No existe ruta.\\
+E & J & No existe ruta.\\
+E & K & No existe ruta.\\
+E & L & No existe ruta.\\
+E & M & No existe ruta.\\
+E & N & No existe ruta.\\
+F & A & No existe ruta.\\
+F & B & No existe ruta.\\
+F & C & No existe ruta.\\
+F & D & No existe ruta.\\
+F & E & No existe ruta.\\
+F & G & No existe ruta.\\
+F & H & No existe ruta.\\
+F & I & No existe ruta.\\
+F & J & No existe ruta.\\
+F & K & No existe ruta.\\
+F & L & No existe ruta.\\
+F & M & No existe ruta.\\
+F & N & No existe ruta.\\
+G & A & No existe ruta.\\
+G & B & No existe ruta.\\
+G & C & No existe ruta.\\
+G & D & No existe ruta.\\
+G & E & No existe ruta.\\
+G & F & No existe ruta.\\
+G & H & No existe ruta.\\
+G & I & No existe ruta.\\
+G & J & No existe ruta.\\
+G & K & No existe ruta.\\
+G & L & No existe ruta.\\
+G & M & No existe ruta.\\
+G & N & No existe ruta.\\
+H & A & No existe ruta.\\
+H & B & No existe ruta.\\
+H & C & No existe ruta.\\
+H & D & No existe ruta.\\
+H & E & No existe ruta.\\
+H & F & No existe ruta.\\
+H & G & No existe ruta.\\
+H & I & No existe ruta.\\
+H & J & No existe ruta.\\
+H & K & No existe ruta.\\
+H & L & No existe ruta.\\
+H & M & No existe ruta.\\
+H & N & No existe ruta.\\
+I & A & No existe ruta.\\
+I & B & No existe ruta.\\
+I & C & No existe ruta.\\
+I & D & No existe ruta.\\
+I & E & No existe ruta.\\
+I & F & No existe ruta.\\
+I & G & No existe ruta.\\
+I & H & No existe ruta.\\
+I & J & No existe ruta.\\
+I & K & No existe ruta.\\
+I & L & No existe ruta.\\
+I & M & No existe ruta.\\
+I & N & No existe ruta.\\
+J & A & No existe ruta.\\
+J & B & No existe ruta.\\
+J & C & No existe ruta.\\
+J & D & No existe ruta.\\
+J & E & No existe ruta.\\
+J & F & No existe ruta.\\
+J & G & No existe ruta.\\
+J & H & No existe ruta.\\
+J & I & No existe ruta.\\
+J & K & No existe ruta.\\
+J & L & No existe ruta.\\
+J & M & No existe ruta.\\
+J & N & No existe ruta.\\
+K & A & No existe ruta.\\
+K & B & No existe ruta.\\
+K & C & No existe ruta.\\
+K & D & No existe ruta.\\
+K & E & No existe ruta.\\
+K & F & No existe ruta.\\
+K & G & No existe ruta.\\
+K & H & No existe ruta.\\
+K & I & No existe ruta.\\
+K & J & No existe ruta.\\
+K & L & No existe ruta.\\
+K & M & No existe ruta.\\
+K & N & No existe ruta.\\
+L & A & No existe ruta.\\
+L & B & No existe ruta.\\
+L & C & No existe ruta.\\
+L & D & No existe ruta.\\
+L & E & No existe ruta.\\
+L & F & No existe ruta.\\
+L & G & No existe ruta.\\
+L & H & No existe ruta.\\
+L & I & No existe ruta.\\
+L & J & No existe ruta.\\
+L & K & No existe ruta.\\
+L & M & No existe ruta.\\
+L & N & No existe ruta.\\
+M & A & No existe ruta.\\
+M & B & No existe ruta.\\
+M & C & No existe ruta.\\
+M & D & No existe ruta.\\
+M & E & No existe ruta.\\
+M & F & No existe ruta.\\
+M & G & No existe ruta.\\
+M & H & No existe ruta.\\
+M & I & No existe ruta.\\
+M & J & No existe ruta.\\
+M & K & No existe ruta.\\
+M & L & No existe ruta.\\
+M & N & No existe ruta.\\
+N & A & No existe ruta.\\
+N & B & No existe ruta.\\
+N & C & No existe ruta.\\
+N & D & No existe ruta.\\
+N & E & No existe ruta.\\
+N & F & No existe ruta.\\
+N & G & No existe ruta.\\
+N & H & No existe ruta.\\
+N & I & No existe ruta.\\
+N & J & No existe ruta.\\
+N & K & No existe ruta.\\
+N & L & No existe ruta.\\
+N & M & No existe ruta.\\
+\bottomrule
+\end{longtable}
+\end{document}

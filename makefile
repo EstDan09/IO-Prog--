@@ -30,7 +30,7 @@ $(BIN_DIR)/floyd: $(P1_SRC_DIR)/floyd.c | $(BIN_DIR)
 run-pending: $(BIN_DIR)/pending
 	./bin/pending
 
-run-menu: $(BIN_DIR)/menu
+run-menu: $(BIN_DIR)/menu $(BIN_DIR)/floyd
 	./bin/menu
 
 run-p1: $(BIN_DIR)/p1
