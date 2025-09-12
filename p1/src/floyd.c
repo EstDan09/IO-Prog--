@@ -814,10 +814,21 @@ int main(int argc, char *argv[]) {
 
     gtk_init(&argc, &argv);
 
-    if (argc < 2) {
-        g_printerr("Usage: %s <glade_file>\n", argv[0]);
-        return 1;
+
+    GtkCssProvider *style_provider = gtk_css_provider_new();
+    GError *error_style = NULL;
+
+    gtk_css_provider_load_from_path(style_provider, "src/style.css", &error_style);
+    if (error_style)
+    {
+        g_printerr("Error en carga de CSS: %s\n", error_style->message);
+        g_clear_error(&error_style);
     }
+
+    gtk_style_context_add_provider_for_screen(
+    gdk_screen_get_default(),
+    GTK_STYLE_PROVIDER(style_provider),
+    GTK_STYLE_PROVIDER_PRIORITY_USER);
 
     GtkBuilder *builder = gtk_builder_new_from_file(argv[1]);
     if (!builder) { g_printerr("Error: Could not load UI file %s\n", argv[1]); return 1; }
@@ -862,6 +873,18 @@ int main(int argc, char *argv[]) {
     GtkWidget *save_button   = GTK_WIDGET(gtk_builder_get_object(builder, "save_button"));
     GtkWidget *load_button   = GTK_WIDGET(gtk_builder_get_object(builder, "load_button"));
     GtkWidget *nodes_spin    = GTK_WIDGET(gtk_builder_get_object(builder, "nodes_spin"));
+
+
+    // CSS 
+    gtk_style_context_add_class(gtk_widget_get_style_context(window), "bg-main");
+    gtk_style_context_add_class(gtk_widget_get_style_context(create_button), "option");
+    gtk_style_context_add_class(gtk_widget_get_style_context(run_button), "option");
+    // gtk_style_context_add_class(gtk_widget_get_style_context(save_button), "btn_load");
+    // gtk_style_context_add_class(gtk_widget_get_style_context(load_button), "btn_load");
+    gtk_widget_set_name(save_button, "btn_option");
+    gtk_widget_set_name(load_button, "btn_option");
+    gtk_widget_set_name(nodes_spin, "spinbutton");
+    
 
     if (create_button) g_signal_connect(create_button, "clicked", G_CALLBACK(create_matrix), nodes_spin);
     if (run_button)    g_signal_connect(run_button,    "clicked", G_CALLBACK(run_floyd),   NULL);

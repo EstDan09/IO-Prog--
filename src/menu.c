@@ -130,7 +130,7 @@ static void launch_floyd(GtkButton *button, gpointer user_data)
     if (ret == -1) {
         g_printerr("Error launching floyd: %s\n", g_strerror(errno));
     } else {
-        g_message("Floyd launched successfully.");
+        g_message("Floyd lanzado correctamente.");
     }
 }
 
@@ -143,7 +143,7 @@ static void on_quit_clicked(GtkButton *button, gpointer user_data)
     gtk_window_close(win);
 }
 
-/* ===== main ===== */
+/* ===== MAIN ===== */
 int main(int argc, char *argv[])
 {
 

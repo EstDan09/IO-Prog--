@@ -1,0 +1,35 @@
+.bg-main {
+    background-color: #d0dad0;   
+}
+
+button.option {
+    background-color: #ffffff;   
+    color: #000000;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #2e7d32;
+    transition: all 200ms ease-in-out;
+}
+
+button.option:hover {
+    background-color: #8aeb8d;  
+    border-color: #81c784; 
+}
+
+button.option:active {
+    background-color: #2e7d32;   
+    border-color: #1b5e20;
+}
+
+#btn_load{
+    background-color: #ffffff;   
+    color: #000000;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #285e9b;
+    transition: all 200ms ease-in-out;
+}
