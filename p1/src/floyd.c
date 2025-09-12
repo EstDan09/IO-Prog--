@@ -62,14 +62,6 @@ static void free_entries(void) {
 }
 
 
-static char **default_labels(int n) {
-    char **lbl = g_new0(char*, n);
-    for (int i = 0; i < n; i++) {
-        lbl[i] = g_strdup_printf("%c", 'A' + i); /* A, B, C... */
-    }
-    return lbl;
-}
-
 static void free_labels(char **lbl, int n) {
     if (!lbl) return;
     for (int i=0;i<n;i++) g_free(lbl[i]);
@@ -233,8 +225,9 @@ static void tex_table_P(FILE *f, const char *caption, int **P, int **PrevP, int 
  * inspo: https://latexdraw.com/tikz-shapes-circle/
  */
 static void tex_write_graph(FILE *f, int n, int **Df, int **Pf, char **labels) {
+    (void)Pf; 
     fprintf(f, "\\section*{Problema: Grafo de rutas}\n");
-    fprintf(f, "\\begin{tikzpicture}[->, >=stealth, node distance=2cm, every node/.style={circle, draw}]\n");
+    fprintf(f, "\\begin{tikzpicture}[->, >=stealth, node distance=2cm, every node/.style={circle, draw, minimum size=6mm, inner sep=1pt}]\n");
 
     // posiciona los nodos en un círculo
     for (int i = 0; i < n; i++) {
@@ -424,6 +417,7 @@ static void compile_and_open_pdf(const char *dir, const char *texname) {
  * Crea la matriz para el glade 
  */
 static void create_matrix(GtkButton *button, gpointer user_data) {
+    (void)button; 
     GtkSpinButton *spin = GTK_SPIN_BUTTON(user_data);
     node_count = gtk_spin_button_get_value_as_int(spin);
 
@@ -507,6 +501,7 @@ static void create_matrix(GtkButton *button, gpointer user_data) {
  * signal blockers: https://docs.gtk.org/gobject/func.signal_handlers_block_by_func.html
  */
 static void on_header_changed(GtkEditable *editable, gpointer user_data) {
+    (void)editable; 
     int idx = GPOINTER_TO_INT(user_data);
 
     if (idx & 0x1000) {
@@ -562,6 +557,8 @@ void free_labels_array(char **labels, int n) {
  * Función principal de ejecución de floyd
  */
 static void run_floyd(GtkButton *button, gpointer user_data) {
+    (void)button; 
+    (void)user_data; 
     if (node_count <= 0 || !entries) return;
     int n = node_count;
 
@@ -664,7 +661,7 @@ static void run_floyd(GtkButton *button, gpointer user_data) {
     gchar *texpath = g_build_filename(dir, "floyd.tex", NULL);
     FILE *f = fopen(texpath, "w");
     if (f) {
-        tex_write_preamble(f, "Proyecto 1 - Rutas Òptimas Algoritmo de Floyd", "Investigación de Operaciones", "II Semestre 2025");
+        tex_write_preamble(f, "Proyecto 1 - Rutas Óptimas Algoritmo de Floyd", "Investigación de Operaciones", "II Semestre 2025");
         int ****Dsnaps = (int****)&D;
         int ****Psnaps = (int****)&P;
         tex_write_all(f, Dsnaps, Psnaps, n, n, labels);
@@ -738,6 +735,7 @@ static void on_save_clicked(GtkButton *b, gpointer user_data) {
  * File chooser para abrir archivos guardados
  */
 static void on_load_clicked(GtkButton *b, gpointer user_data) {
+    (void)b; 
     GtkSpinButton *spin = GTK_SPIN_BUTTON(user_data);
 
     GtkWidget *dlg = gtk_file_chooser_dialog_new(
