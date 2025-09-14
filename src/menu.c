@@ -13,12 +13,13 @@ static GHashTable *pending_map = NULL;
 /* ===== Prototipos ===== */
 static void on_destroy(GtkWidget *w, gpointer data);
 static void on_quit_clicked(GtkButton *button, gpointer user_data);
-static void on_pending_exit(GPid pid, gint status, gpointer data);
+// static void on_pending_exit(GPid pid, gint status, gpointer data);
 static void child_setup_func(gpointer user_data);
 static void launch_pending(GtkButton *button, gpointer user_data);
 static void launch_floyd(GtkButton *button, gpointer user_data);
 
 /* Lee un PID desde un archivo temporal (pidfile) */
+/*
 static GPid read_pidfile(const char *path)
 {
     gchar *content = NULL;
@@ -34,8 +35,10 @@ static GPid read_pidfile(const char *path)
         return 0;
     return (GPid)v;
 }
+*/
 
 /* ===== Callbacks para procesos lanzados con g_spawn_async (pending) ===== */
+/*
 static void on_pending_exit(GPid pid, gint status, gpointer data)
 {
     (void)status;
@@ -47,6 +50,7 @@ static void on_pending_exit(GPid pid, gint status, gpointer data)
     }
     g_spawn_close_pid(pid);
 }
+*/
 
 /* El hijo se vuelve líder de su propio grupo para poder matar su descendencia */
 static void child_setup_func(gpointer user_data)
@@ -81,6 +85,7 @@ static void on_destroy(GtkWidget *w, gpointer data)
 static void launch_pending(GtkButton *button, gpointer user_data)
 {
     (void)user_data;
+    (void)button; 
 
 
     char *argv[] = {"./bin/pending", NULL};
@@ -130,7 +135,7 @@ static void launch_floyd(GtkButton *button, gpointer user_data)
     if (ret == -1) {
         g_printerr("Error launching floyd: %s\n", g_strerror(errno));
     } else {
-        g_message("Floyd launched successfully.");
+        g_message("Floyd lanzado correctamente.");
     }
 }
 
@@ -143,7 +148,7 @@ static void on_quit_clicked(GtkButton *button, gpointer user_data)
     gtk_window_close(win);
 }
 
-/* ===== main ===== */
+/* ===== MAIN ===== */
 int main(int argc, char *argv[])
 {
 

@@ -1,0 +1,8 @@
+# FloydCase v1
+N=4
+MATRIX
+0 8 9 5
+7 0 4 5
+10 1 7 3
+7 11 8 0
+END
