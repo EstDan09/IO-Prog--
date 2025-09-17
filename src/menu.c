@@ -139,6 +139,20 @@ static void launch_floyd(GtkButton *button, gpointer user_data)
     }
 }
 
+/* ===== Lanzar Knapsack con system() + setsid + pidfile ===== */
+static void launch_knapsack(GtkButton *button, gpointer user_data)
+{
+    (void)button; (void)user_data;
+    const char *bin   = "./bin/p2";
+    const char *glade = "p2/ui/knapsack.glade";
+    char cmd[512];
+    g_snprintf(cmd, sizeof(cmd),
+               "setsid '%s' '%s' </dev/null >/dev/null 2>&1 &",
+               bin, glade);
+    int ret = system(cmd);
+    if (ret == -1) g_printerr("Error lanzando p2: %s\n", g_strerror(errno));
+}
+
 
 /* ===== Botón Salir ===== */
 static void on_quit_clicked(GtkButton *button, gpointer user_data)
@@ -220,7 +234,7 @@ int main(int argc, char *argv[])
     /* Acciones */
     g_signal_connect(win, "destroy", G_CALLBACK(on_destroy), NULL);
     g_signal_connect(b1, "clicked", G_CALLBACK(launch_floyd), NULL); /* Floyd con system() */
-    g_signal_connect(b2, "clicked", G_CALLBACK(launch_pending), NULL);
+    g_signal_connect(b2, "clicked", G_CALLBACK(launch_knapsack), NULL);
     g_signal_connect(b3, "clicked", G_CALLBACK(launch_pending), NULL);
     g_signal_connect(b4, "clicked", G_CALLBACK(launch_pending), NULL);
     g_signal_connect(bout, "clicked", G_CALLBACK(on_quit_clicked), win);
