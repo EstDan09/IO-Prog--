@@ -4,6 +4,8 @@ Pequeño proyecto en C con dos ejecutables (`menu` y `pending`) usando **GTK+ 3*
 
 Proyecto en C con un menu Principal. La primera opción ahora se encuentra disponible. Esta ejecuta un **algoritmo de Floyd** para las rutas más cortas 
 
+La segunda opción del menu ahora se encuentra disponible. Esta ejecuta el **Problema de la Mochila** en sus diferentes variantes: 1/0, bounded y unbounded. 
+
 ## Requisitos
 
 - Linux (probado en Ubuntu/Mint)
