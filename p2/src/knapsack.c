@@ -83,6 +83,9 @@ static void rebuild_items_rows(int N) {
         GtkWidget *chk_inf = gtk_check_button_new();
         gtk_grid_attach(GTK_GRID(grid_items), chk_inf, 5, i+1, 1, 1);
 
+        GtkStyleContext *ctx = gtk_widget_get_style_context(chk_inf);
+        gtk_style_context_add_class(ctx, "infinite-check"); 
+
         // toggle infinito deshabilita qty (C puro, sin lambdas)
         g_signal_connect(chk_inf, "toggled",
                          G_CALLBACK(on_chk_inf_toggled), s_q);
@@ -301,7 +304,20 @@ static gboolean write_latex_and_compile(const CaseData *cs, Cell **T, Sols *S, c
         "\\usepackage[table]{xcolor}\n"
         "\\usepackage{longtable}\n"
         "\\title{Proyecto 2: Problema de la Mochila}\\date{\\today}\n"
-        "\\begin{document}\\maketitle\n"
+        "\\begin{document}\n"
+        "\\begin{titlepage}\n"
+        "  \\centering\n"
+        "  \\vfill\n"
+        "  {\\Huge Proyecto 2 : Problema de la Mochila}\\par\n"                     
+        "  \\vspace{1cm}\n"
+        "  {\\Large Curso: Investigación de Operaciones}\\par\n"            
+        "  {\\Large Semestre: II - 2025}\\par\n"         
+        "  \\vfill\n"
+        "  {\\Large Autores: Fabian Bustos - Esteban Secaida}\\par\n"
+        "  \\vspace{1cm}\n"
+        "  {\\large Fecha: \\today}\\par\n"
+        "  \\vfill\n"
+        "\\end{titlepage}\n\n"
         "\\section*{Descripción}\n"
         "Se resuelve el problema de la mochila en variante \\textit{%s} (capacidad $W=%d$) con %d objetos.\\\\\n",
         (cs->type==KNAP_01?"0/1": (cs->type==KNAP_UNBOUNDED?"unbounded":"bounded")), cs->W, cs->n);
@@ -324,7 +340,12 @@ static gboolean write_latex_and_compile(const CaseData *cs, Cell **T, Sols *S, c
     fprintf(f,"\\end{longtable}\n");
 
     // tabla DP
-    fprintf(f,"\\subsection*{Tabla de trabajo (DP)}\n\\setlength{\\tabcolsep}{4pt}\\renewcommand{\\arraystretch}{1.1}\n");
+    fprintf(f,
+    "\\subsection*{Tabla de trabajo (DP)}\n"
+    "\\setlength{\\tabcolsep}{4pt}"
+    "\\renewcommand{\\arraystretch}{1.1}\n"
+    "\\begin{center}\n"
+    );
     fprintf(f,"\\noindent\\begin{tabular}{r|");
     for (int w=0; w<=cs->W; w++) fprintf(f,"r");
     fprintf(f,"}\\hline\n$i\\backslash W$ ");
@@ -343,6 +364,7 @@ static gboolean write_latex_and_compile(const CaseData *cs, Cell **T, Sols *S, c
         fprintf(f,"\\\\\n");
     }
     fprintf(f,"\\hline\\end{tabular}\n");
+    fprintf(f, "\\end{center}\n");
 
     // soluciones
     fprintf(f,"\\subsection*{Solución óptima}\n"
@@ -462,8 +484,11 @@ int main(int argc, char **argv){
     GError *err=NULL;
     builder = gtk_builder_new();
     if (!gtk_builder_add_from_file(builder, glade, &err)){
-        g_printerr("No se pudo cargar %s: %s\n", glade, err->message); g_error_free(err); return 1;
+        g_printerr("No se pudo cargar %s: %s\n", glade, err->message); 
+        g_error_free(err); 
+        return 1;
     }
+
     win       = GTK_WIDGET(gtk_builder_get_object(builder, "knap_window"));
     btn_run   = GTK_WIDGET(gtk_builder_get_object(builder, "btn_run"));
     btn_save  = GTK_WIDGET(gtk_builder_get_object(builder, "btn_save"));
@@ -479,16 +504,36 @@ int main(int argc, char **argv){
 
     // límites GUI pedidos en la especificación
     gtk_spin_button_set_range(GTK_SPIN_BUTTON(spin_W), 0, 20);
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(spin_N), 1, 10);
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(spin_N), 1, 20);
 
     // CSS opcional para colores
     GtkCssProvider *css = gtk_css_provider_new();
-    gtk_css_provider_load_from_data(css,
-        ".dp-skip { color: #228B22; }"
-        ".dp-take { color: #B22222; }"
-        ".dp-tie  { color: #1E90FF; }", -1, NULL);
-    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-        GTK_STYLE_PROVIDER(css), GTK_STYLE_PROVIDER_PRIORITY_USER);
+    GError *error_style = NULL;
+
+    gtk_css_provider_load_from_path(css, "src/style.css", &error_style);
+    if (error_style){
+        g_printerr("Error en carga de CSS: %s\n", error_style->message);
+        g_clear_error(&error_style);
+    }
+
+    gtk_style_context_add_provider_for_screen(
+        gdk_screen_get_default(),
+        GTK_STYLE_PROVIDER(css),
+        GTK_STYLE_PROVIDER_PRIORITY_USER
+    );
+
+    // ✅ Agregar clases a widgets
+    gtk_style_context_add_class(gtk_widget_get_style_context(win), "bg-pending");
+
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn_run), "option");
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn_save), "pending-button");
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn_load), "load");
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn_export), "option");
+
+    gtk_style_context_add_class(gtk_widget_get_style_context(spin_W), "spinbutton");
+    gtk_style_context_add_class(gtk_widget_get_style_context(spin_N), "spinbutton");
+
+    gtk_style_context_add_class(gtk_widget_get_style_context(combo_type), "pending-button");
 
     // señales
     g_signal_connect(spin_N, "value-changed", G_CALLBACK(on_change_N), NULL);
@@ -503,4 +548,5 @@ int main(int argc, char **argv){
     g_object_unref(builder);
     return 0;
 }
+
 

@@ -3,7 +3,7 @@
 }
 
 .bg-pending{
-    background-color: #d0dad0;
+    background-color: #6e6e6e;
 }
 
 
@@ -42,7 +42,7 @@ button.option:active {
     background-color: #2e7d32;   
     border-color: #1b5e20;
 }
-#btn_option {
+button.load {
     background-color: #ffffff;   
     color: #000000;
     border-radius: 4px;
@@ -53,7 +53,7 @@ button.option:active {
     transition: all 200ms ease-in-out;
 }
 
-#btn_option:hover {
+button.load:hover {
     background-color: #246aff;
 }
 
@@ -112,7 +112,17 @@ button.option:active {
     background: #5e81ac;
 }
 
+.dp-skip { color: #228B22; }
 
+.dp-take { color: #B22222; }
+
+.dp-tie  { color: #1E90FF; }
+
+.infinite-check {
+    color: #ffffff;  
+    font-weight: bold;
+    font-size: 16px;
+}
 
 
 

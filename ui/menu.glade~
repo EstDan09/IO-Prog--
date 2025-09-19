@@ -22,7 +22,7 @@
         <property name="spacing">12</property>
         <child>
           <object class="GtkButton" id="btn_algo1">
-            <property name="label" translatable="yes">TBA</property>
+            <property name="label" translatable="yes">Proyecto 1 - Algoritmo de Floyd</property>
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
@@ -55,6 +55,7 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Ejecuta algoritmo 3 (pendiente)</property>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -68,6 +69,7 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Ejecuta algoritmo 4 (pendiente)</property>
           </object>
           <packing>
             <property name="expand">True</property>

@@ -135,7 +135,7 @@ static void launch_floyd(GtkButton *button, gpointer user_data)
     if (ret == -1) {
         g_printerr("Error launching floyd: %s\n", g_strerror(errno));
     } else {
-        g_message("Floyd lanzado correctamente.");
+        // g_message("Floyd lanzado correctamente.");
     }
 }
 
@@ -226,7 +226,8 @@ int main(int argc, char *argv[])
     gtk_widget_set_tooltip_text(b1,
                                 "Algoritmo de Floyd–Warshall: calcula distancias mínimas entre todos los pares.\n"
                                 "Muestra D(0) y resultado final; integra guardado/carga y puede generar reporte PDF.");
-    gtk_widget_set_tooltip_text(b2, "Ejecuta Algoritmo 2 (pending)");
+    gtk_widget_set_tooltip_text(b2, "Problema de la mochila: problema clásico de optimización.\n"
+                                    "Selecciona de un grupo de elementos con un peso y valor definidos por el usuario para maximizar la ganancia, sin exceder la capacidad de la mochila");
     gtk_widget_set_tooltip_text(b3, "Ejecuta Algoritmo 3 (pending)");
     gtk_widget_set_tooltip_text(b4, "Ejecuta Algoritmo 4 (pending)");
     gtk_widget_set_tooltip_text(bout, "Salir del menú");

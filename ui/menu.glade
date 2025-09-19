@@ -38,7 +38,7 @@
         </child>
         <child>
           <object class="GtkButton" id="btn_algo2">
-            <property name="label" translatable="yes">TBA</property>
+            <property name="label" translatable="yes">Proyecto 2 - Problema de la Mochila</property>
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
