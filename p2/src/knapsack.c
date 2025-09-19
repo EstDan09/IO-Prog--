@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <limits.h>
 
-#define MAX_ITEMS  50   // puedes pasar de 10 (trabajo extra)
+#define MAX_ITEMS  50   // max de items, está hard setteado a 20 pero teóricamente pueden ser más 
 #define MAX_CAP    200  // seguridad; GUI limita a 20
 #define INF_QTY    (-1) // infinito
 
@@ -313,14 +313,25 @@ static gboolean write_latex_and_compile(const CaseData *cs, Cell **T, Sols *S, c
         "  {\\Large Curso: Investigación de Operaciones}\\par\n"            
         "  {\\Large Semestre: II - 2025}\\par\n"         
         "  \\vfill\n"
-        "  {\\Large Autores: Fabian Bustos - Esteban Secaida}\\par\n"
+        "  {\\Large Autores: Fabián Bustos - Esteban Secaida}\\par\n"
         "  \\vspace{1cm}\n"
         "  {\\large Fecha: \\today}\\par\n"
         "  \\vfill\n"
         "\\end{titlepage}\n\n"
         "\\section*{Descripción}\n"
-        "Se resuelve el problema de la mochila en variante \\textit{%s} (capacidad $W=%d$) con %d objetos.\\\\\n",
-        (cs->type==KNAP_01?"0/1": (cs->type==KNAP_UNBOUNDED?"unbounded":"bounded")), cs->W, cs->n);
+        "Se resuelve el problema de la mochila en su variante \\textit{%s}, con una capacidad total de $W=%d$ unidades. \\\\ \n"
+        "El conjunto de datos incluye %d objetos disponibles, cada uno caracterizado por un peso y un valor asociado. \\\\ \n"
+        "El objetivo consiste en seleccionar una combinación de estos objetos de modo que la suma de los pesos no exceda la capacidad $W$, \n"
+        "maximizando al mismo tiempo el valor total obtenido en la mochila. \\\\ \n"
+        "En la variante \\textit{%s}, las restricciones sobre la cantidad de copias de cada objeto difieren: en el caso 0/1 ($x_i \\in \\{0,1\\}$) \n"
+        "solo puede elegirse cada objeto una vez; en la variante bounded ($0 \\leq x_i \\leq b_i$) existe un límite superior $b_i$ de copias permitidas; \n"
+        "y en la variante unbounded ($x_i \\geq 0$) puede elegirse cualquier número de copias sin restricción. \\\\ \n",
+        (cs->type==KNAP_01?"0/1": (cs->type==KNAP_UNBOUNDED?"unbounded":"bounded")),
+        cs->W,
+        cs->n,
+        (cs->type==KNAP_01?"0/1": (cs->type==KNAP_UNBOUNDED?"unbounded":"bounded"))
+    );
+
 
     // problema formal
     fprintf(f,"\\subsection*{Problema ingresado}\n"
