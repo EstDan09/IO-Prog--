@@ -8,10 +8,12 @@ P1_SRC_DIR=p1/src
 P1_UI_DIR=p1/ui
 P2_SRC_DIR=p2/src
 P2_UI_DIR=p2/ui
+P3_SRC_DIR=p3/src
+P3_UI_DIR=p3/ui
 
-.PHONY: all clean run-pending run-menu run-p1 run-floyd run-p2
+.PHONY: all clean run-pending run-menu run-p1 run-floyd run-p2 run-p3
 
-all: $(BIN_DIR)/pending $(BIN_DIR)/menu $(BIN_DIR)/p1 $(BIN_DIR)/floyd $(BIN_DIR)/p2
+all: $(BIN_DIR)/pending $(BIN_DIR)/menu $(BIN_DIR)/p1 $(BIN_DIR)/floyd $(BIN_DIR)/p2 $(BIN_DIR)/p3
 
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
@@ -34,12 +36,15 @@ $(BIN_DIR)/floyd: $(P1_SRC_DIR)/floyd.c | $(BIN_DIR)
 $(BIN_DIR)/p2: $(P2_SRC_DIR)/knapsack.c | $(BIN_DIR)
 	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
+# --- P3 (reemplazo de equipos) ---
+$(BIN_DIR)/p3: $(P3_SRC_DIR)/reemplazo.c | $(BIN_DIR)
+	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
+
 # --- RUN COMMANDS ---
 run-pending: $(BIN_DIR)/pending
 	./bin/pending
 
-# Suele convenir que dependa de los binarios que va a lanzar
-run-menu: $(BIN_DIR)/menu $(BIN_DIR)/floyd $(BIN_DIR)/p2
+run-menu: $(BIN_DIR)/menu $(BIN_DIR)/floyd $(BIN_DIR)/p2 $(BIN_DIR)/p3
 	./bin/menu
 
 run-p1: $(BIN_DIR)/p1
@@ -51,6 +56,8 @@ run-floyd: $(BIN_DIR)/floyd
 run-p2: $(BIN_DIR)/p2
 	./bin/p2 $(P2_UI_DIR)/knapsack.glade
 
-clean:
-	rm -rf $(BIN_DIR)
+run-p3: $(BIN_DIR)/p3
+	./bin/p3 $(P3_UI_DIR)/reemplazo.glade
 
+clean:
+	rm -rf $(BIN_DIR) *.aux *.log *.tex *.pdf
