@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.8.24)  26 SEP 2025 07:20
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.8.24)  26 SEP 2025 09:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -383,16 +383,16 @@ Underfull \hbox (badness 10000) in paragraph at lines 19--22
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 23--30
+Underfull \hbox (badness 10000) in paragraph at lines 23--29
 
  []
 
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 6
-0.
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 5
+3.
 (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
-Underfull \hbox (badness 10000) in paragraph at lines 59--63
+Underfull \hbox (badness 10000) in paragraph at lines 52--54
 
  []
 
@@ -401,8 +401,8 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.63 \end{document}
-                    [1] [2] (./reporte.aux
+l.54 \end{document}
+                    [1] (./reporte.aux
 LaTeX Info: Redefining \. on input line 11.
 LaTeX Info: Redefining \% on input line 11.
 )
@@ -414,10 +414,10 @@ Package rerunfilecheck Info: File `reporte.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 10444 strings out of 474222
- 161740 string characters out of 5748733
- 1935975 words of memory out of 5000000
- 32588 multiletter control sequences out of 15000+600000
+ 10440 strings out of 474222
+ 161689 string characters out of 5748733
+ 1933975 words of memory out of 5000000
+ 32585 multiletter control sequences out of 15000+600000
  571026 words of font info for 66 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,8n,79p,253b,493s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -437,10 +437,10 @@ ype1/public/cm-super/sfbx1440.pfb></usr/share/texmf/fonts/type1/public/cm-super
 share/texmf/fonts/type1/public/cm-super/sfrm1440.pfb></usr/share/texmf/fonts/ty
 pe1/public/cm-super/sfrm2074.pfb></usr/share/texmf/fonts/type1/public/cm-super/
 sftt1095.pfb>
-Output written on reporte.pdf (3 pages, 232462 bytes).
+Output written on reporte.pdf (2 pages, 231052 bytes).
 PDF statistics:
- 118 PDF objects out of 1000 (max. 8388607)
- 76 compressed objects within 1 object stream
- 8 named destinations out of 1000 (max. 500000)
+ 114 PDF objects out of 1000 (max. 8388607)
+ 73 compressed objects within 1 object stream
+ 7 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

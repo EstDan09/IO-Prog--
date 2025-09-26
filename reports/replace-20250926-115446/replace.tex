@@ -1,0 +1,99 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\tikzset{every node/.style={circle, draw, minimum size=8mm}}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large Instituto Tecnol\'ogico de Costa Rica\\Escuela de Computaci\'on}\vspace{1cm}
+{\huge Proyecto: Reemplazo de Equipos}\vspace{1cm}
+{\large II Semestre 2025}\vspace{2cm}
+{\large Estudiante(s):}\\Esteban Secaida - Fabian Bustos\vfill
+{\large Fecha: \today}
+\end{titlepage}
+\section*{Datos del Problema}
+Costo inicial: $500,00$, Horizonte $T=5$, Vida \'util $L=3$.\\
+\textbf{Sin ganancia por uso}.\\
+\textbf{Con inflaci\'on:} $i=0,10\%$ por per\'iodo.\\
+\subsection*{Mantenimiento y Reventa por Edad}
+\begin{tabular}{c|c|c}\toprule
+Edad & Mant. & Reventa\\\midrule
+1 & 30,00 & 400,00 \\
+2 & 40,00 & 300,00 \\
+3 & 60,00 & 250,00 \\
+\bottomrule\end{tabular}
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}(\text{Mant}(k))\cdot(1+i)^{k-1}-\text{Reventa}(x-t)\cdot(1+i)^{x-t-1}$ si hay inflaci\'on.\\
+\section*{Tabla de $C_{t,x}$}
+Entradas v\'alidas con $t<x\le\min(t+L,T)$.
+
+\begin{tabular}{c|c|c}\toprule
+ t & x & $C_{t,x}$ \\\midrule
+0 & 1 & 130,00 \\
+0 & 2 & 269,74 \\
+0 & 3 & 379,66 \\
+1 & 2 & 130,00 \\
+1 & 3 & 269,74 \\
+1 & 4 & 379,66 \\
+2 & 3 & 130,00 \\
+2 & 4 & 269,74 \\
+2 & 5 & 379,66 \\
+3 & 4 & 130,00 \\
+3 & 5 & 269,74 \\
+4 & 5 & 130,00 \\
+\bottomrule\end{tabular}
+\section*{Programaci\'on Din\'amica: $G(t)$ y Siguientes}
+\begin{tabular}{c|c|l}\toprule
+ t & $G(t)$ & Siguientes \\\midrule
+0 & 639,66 & 1, 3 \\
+1 & 509,66 & 2, 4 \\
+2 & 379,66 & 5 \\
+3 & 260,00 & 4 \\
+4 & 130,00 & 5 \\
+5 & 0,00 &  \\
+\bottomrule\end{tabular}
+\section*{Todos los planes \`optimos}
+Costo m\'inimo total: $G(0)=\mathbf{639,66}$.\\
+\noindent Ruta 1: \texttt{0 -> 1 -> 2 -> 5}\\
+\noindent Ruta 2: \texttt{0 -> 1 -> 4 -> 5}\\
+\noindent Ruta 3: \texttt{0 -> 3 -> 4 -> 5}\\
+\section*{Grafos de Rutas \`Optimas}
+\subsection*{Ruta óptima 1}
+\begin{tikzpicture}[->, >=stealth, node distance=2cm]
+\node (R0Y0) at (0,0) {0};
+\node (R0Y1) at (2,0) {1};
+\node (R0Y2) at (4,0) {2};
+\node (R0Y5) at (6,0) {5};
+\draw[->] (R0Y0) -- (R0Y1);
+\draw[->] (R0Y1) -- (R0Y2);
+\draw[->] (R0Y2) -- (R0Y5);
+\end{tikzpicture}
+\bigskip
+\subsection*{Ruta óptima 2}
+\begin{tikzpicture}[->, >=stealth, node distance=2cm]
+\node (R1Y0) at (0,0) {0};
+\node (R1Y1) at (2,0) {1};
+\node (R1Y4) at (4,0) {4};
+\node (R1Y5) at (6,0) {5};
+\draw[->] (R1Y0) -- (R1Y1);
+\draw[->] (R1Y1) -- (R1Y4);
+\draw[->] (R1Y4) -- (R1Y5);
+\end{tikzpicture}
+\bigskip
+\subsection*{Ruta óptima 3}
+\begin{tikzpicture}[->, >=stealth, node distance=2cm]
+\node (R2Y0) at (0,0) {0};
+\node (R2Y3) at (2,0) {3};
+\node (R2Y4) at (4,0) {4};
+\node (R2Y5) at (6,0) {5};
+\draw[->] (R2Y0) -- (R2Y3);
+\draw[->] (R2Y3) -- (R2Y4);
+\draw[->] (R2Y4) -- (R2Y5);
+\end{tikzpicture}
+\bigskip
+\end{document}

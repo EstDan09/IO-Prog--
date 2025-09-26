@@ -1,4 +1,3 @@
-// reemplazo.c - Único archivo con UI + DP + PDF (GTK3)
 // Compilar:
 //   gcc -O2 -Wall -o reemplazo reemplazo.c `pkg-config --cflags --libs gtk+-3.0` -lm
 //
@@ -9,6 +8,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
+#include <glib/gstdio.h>
+
+#define QUIET 1
+#if QUIET
+  #undef g_print
+  #undef g_printerr
+  #define g_print(...)     do{}while(0)
+  #define g_printerr(...)  do{}while(0)
+#endif
 
 // ==============================
 // --------- Estructuras --------
@@ -190,12 +199,16 @@ static int tabla_leer_a_vectores(int L, double *mant, double *rev){
 // ==============================
 // --------- I/O archivos -------
 // ==============================
+
+// Guardar EXACTAMENTE las filas de la vida útil (lo visible en el grid)
 void guardar_problema(const char *fname, ReemplazoData *p) {
     FILE *f = fopen(fname, "w");
     if (!f) { g_printerr("No pude abrir %s para escribir\n", fname); return; }
     fprintf(f, "%.10g %d %d\n", p->costo_inicial, p->plazo, p->vida_util);
-    for (int i = 0; i < p->plazo; i++) {
-        int per = (p->periodos && p->periodos[i].periodo>0) ? p->periodos[i].periodo : (i+1);
+
+    int L = p->vida_util;
+    for (int i = 0; i < L; i++) {
+        int per = i + 1;
         double rev = p->periodos ? p->periodos[i].reventa : 0.0;
         double man = p->periodos ? p->periodos[i].mantenimiento : 0.0;
         fprintf(f, "%d %.10g %.10g\n", per, rev, man);
@@ -212,15 +225,18 @@ ReemplazoData *cargar_problema(const char *fname) {
     }
     if (p->plazo <= 0) { fclose(f); free(p); g_printerr("Plazo inválido en %s\n", fname); return NULL; }
     p->periodos = (Periodo*)xmalloc(sizeof(Periodo) * p->plazo);
-    for (int i = 0; i < p->plazo; i++) {
+    for (int i = 0; i < p->plazo; i++) { p->periodos[i].periodo = i+1; p->periodos[i].reventa = 0; p->periodos[i].mantenimiento = 0; }
+
+    // Leer sólo L filas
+    for (int i = 0; i < p->vida_util; i++) {
         int per=0; double rev=0, man=0;
-        if (fscanf(f, "%d %lf %lf", &per, &rev, &man) != 3) {
-            if (i>0){ per=i+1; rev=p->periodos[i-1].reventa; man=p->periodos[i-1].mantenimiento; }
-            else    { per=i+1; rev=0; man=0; }
+        if (fscanf(f, "%d %lf %lf", &per, &rev, &man) != 3) break;
+        int idx = per - 1;
+        if (idx >= 0 && idx < p->plazo) {
+            p->periodos[idx].periodo = per;
+            p->periodos[idx].reventa = rev;
+            p->periodos[idx].mantenimiento = man;
         }
-        p->periodos[i].periodo = per;
-        p->periodos[i].reventa = rev;
-        p->periodos[i].mantenimiento = man;
     }
     fclose(f);
     return p;
@@ -479,14 +495,15 @@ static void generar_grafos_rutas(FILE *f, const ReemplazoData *p, const SolveOut
         fprintf(f, "\\subsection*{Ruta óptima %d}\n", r+1);
         fprintf(f, "\\begin{tikzpicture}[->, >=stealth, node distance=2cm]\n");
 
-        // Dibujar nodos en línea horizontal
+        // Dibujar nodos en línea horizontal (0 incluido)
+        fprintf(f, "\\node (R%dY0) at (0,0) {0};\n", r);
         for (int i = 0; i < S->paths.lens[r]; i++) {
             int year = S->paths.paths[r][i];
-            // Node name is unique: prefix with path index AND year
-            fprintf(f, "\\node (R%dY%d) at (%d,0) {%d};\n", r, year, i*2, year);
+            fprintf(f, "\\node (R%dY%d) at (%d,0) {%d};\n", r, year, (i+1)*2, year);
         }
 
         // Dibujar aristas
+        fprintf(f, "\\draw[->] (R%dY0) -- (R%dY%d);\n", r, r, S->paths.paths[r][0]);
         for (int i = 0; i < S->paths.lens[r]-1; i++) {
             int from = S->paths.paths[r][i];
             int to   = S->paths.paths[r][i+1];
@@ -497,8 +514,7 @@ static void generar_grafos_rutas(FILE *f, const ReemplazoData *p, const SolveOut
     }
 }
 
-
-static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const char *fname) {
+static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const char *fname_unused) {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
 
@@ -574,7 +590,6 @@ static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const 
     return 0;
 }
 
-
 // ==============================
 // --------- Lectura UI ---------
 // ==============================
@@ -610,6 +625,59 @@ static ReemplazoData leer_desde_widgets(void){
 }
 
 // ==============================
+// ---- Helpers FileChooser -----
+// ==============================
+static char* elegir_ruta_guardar(GtkWindow *parent) {
+    GtkWidget *dlg = gtk_file_chooser_dialog_new(
+        "Guardar problema", parent, GTK_FILE_CHOOSER_ACTION_SAVE,
+        "_Cancelar", GTK_RESPONSE_CANCEL, "_Guardar", GTK_RESPONSE_ACCEPT, NULL);
+    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dlg), TRUE);
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dlg), "problema.rep");
+    char *ruta = NULL;
+    if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
+        ruta = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
+    }
+    gtk_widget_destroy(dlg);
+    return ruta; // g_free() luego
+}
+
+static char* elegir_ruta_abrir(GtkWindow *parent) {
+    GtkWidget *dlg = gtk_file_chooser_dialog_new(
+        "Cargar problema", parent, GTK_FILE_CHOOSER_ACTION_OPEN,
+        "_Cancelar", GTK_RESPONSE_CANCEL, "_Abrir", GTK_RESPONSE_ACCEPT, NULL);
+    char *ruta = NULL;
+    if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
+        ruta = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
+    }
+    gtk_widget_destroy(dlg);
+    return ruta; // g_free() luego
+}
+
+// Volcar struct en UI y grid
+static void volcar_en_ui_y_tabla(const ReemplazoData *p) {
+    char buf[64];
+    snprintf(buf,sizeof(buf),"%.2f", p->costo_inicial);
+    gtk_entry_set_text(GTK_ENTRY(entryCosto), buf);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinPlazo), p->plazo);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinVida),  p->vida_util);
+
+    tabla_init_if_needed();
+    tabla_resize_rows(p->vida_util);
+
+    GtkListStore *store = tabla_get_store();
+    if (!store) return;
+
+    for (int i=0;i<p->vida_util;i++){
+        GtkTreeIter it;
+        if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &it, NULL, i)){
+            gtk_list_store_set(store, &it,
+                COL_MANT,    p->periodos[i].mantenimiento,
+                COL_REVENTA, p->periodos[i].reventa, -1);
+        }
+    }
+}
+
+// ==============================
 // ----------- Callbacks --------
 // ==============================
 static void on_spinVida_changed(GtkSpinButton *s, gpointer u){
@@ -619,57 +687,46 @@ static void on_spinVida_changed(GtkSpinButton *s, gpointer u){
 }
 
 G_MODULE_EXPORT void on_btnGuardar_clicked(GtkButton *b, gpointer u) {
+    GtkWindow *win = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(b)));
+    char *ruta = elegir_ruta_guardar(win);
+    if (!ruta) return;
+
     ReemplazoData p = leer_desde_widgets();
-    guardar_problema("problema.rep", &p);
+    guardar_problema(ruta, &p);
     free(p.periodos);
-    gtk_widget_set_sensitive(GTK_WIDGET(b), TRUE);
+    g_print("Guardado en: %s\n", ruta);
+    g_free(ruta);
 }
 
 G_MODULE_EXPORT void on_btnCargar_clicked(GtkButton *b, gpointer u) {
-    ReemplazoData *p = cargar_problema("problema.rep");
+    GtkWindow *win = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(b)));
+    char *ruta = elegir_ruta_abrir(win);
+    if (!ruta) return;
+
+    ReemplazoData *p = cargar_problema(ruta);
     if (p) {
-        char buf[64];
-        snprintf(buf,sizeof(buf),"%.2f", p->costo_inicial);
-        gtk_entry_set_text(GTK_ENTRY(entryCosto), buf);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinPlazo), p->plazo);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinVida), p->vida_util);
-
-        // Reflejar en la tabla
-        tabla_init_if_needed();
-        tabla_resize_rows(p->vida_util);
-        GtkListStore *store = tabla_get_store();
-        if (store){
-            for (int i=0;i<p->vida_util;i++){
-                GtkTreeIter it;
-                if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &it, NULL, i)){
-                    gtk_list_store_set(store, &it,
-                        COL_MANT, p->periodos[i].mantenimiento,
-                        COL_REVENTA, p->periodos[i].reventa, -1);
-                }
-            }
-        }
-
-        g_print("Cargado: Costo=%.2f, Plazo=%d, Vida=%d\n", p->costo_inicial, p->plazo, p->vida_util);
+        volcar_en_ui_y_tabla(p);
+        g_print("Cargado de: %s\n", ruta);
         free(p->periodos);
         free(p);
     } else {
-        g_printerr("No se pudo cargar problema.rep\n");
+        g_printerr("No se pudo cargar %s\n", ruta);
     }
+    g_free(ruta);
 }
 
 G_MODULE_EXPORT void on_btnEjecutar_clicked(GtkButton *b, gpointer u) {
-    ReemplazoData *p = cargar_problema("problema.rep");
-    if (!p) {
-        ReemplazoData tmp = leer_desde_widgets();
-        p = (ReemplazoData*)xmalloc(sizeof(ReemplazoData));
-        *p = tmp; // shallow copy; tmp.periodos queda en p
-    }
+    // Ejecuta con lo que está en UI/tabla actualmente
+    ReemplazoData tmp = leer_desde_widgets();
+    ReemplazoData *p = (ReemplazoData*)xmalloc(sizeof(ReemplazoData));
+    *p = tmp;
+
     SolveOut S;
     memset(&S, 0, sizeof(S));
     solve_caso(p, &S);
 
     if (generar_reporte_tex(p, &S, "reporte.tex") == 0) {
-        // compilar_y_abrir_pdf("reporte.tex");
+        // ok
     } else {
         g_printerr("No se pudo crear reporte.tex\n");
     }
