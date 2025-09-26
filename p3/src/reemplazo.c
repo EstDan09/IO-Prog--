@@ -396,7 +396,7 @@ static void escribir_portada(FILE *f) {
         "{\\Large Instituto Tecnol\\'ogico de Costa Rica\\\\Escuela de Computaci\\'on}\\vspace{1cm}\n"
         "{\\huge Proyecto: Reemplazo de Equipos}\\vspace{1cm}\n"
         "{\\large II Semestre 2025}\\vspace{2cm}\n"
-        "{\\large Estudiante(s):}\\\\Esteban Secaida (y equipo)\\vfill\n"
+        "{\\large Estudiante(s):}\\\\Esteban Secaida - Fabian Bustos\\vfill\n"
         "{\\large Fecha: \\today}\n"
         "\\end{titlepage}\n");
 }
@@ -473,6 +473,31 @@ static void escribir_rutas(FILE *f, const ReemplazoData *p, const SolveOut *S) {
     }
 }
 
+static void generar_grafos_rutas(FILE *f, const ReemplazoData *p, const SolveOut *S) {
+    fprintf(f, "\\section*{Grafos de Rutas \\`Optimas}\n");
+    for (int r = 0; r < S->paths.num_paths; r++) {
+        fprintf(f, "\\subsection*{Ruta óptima %d}\n", r+1);
+        fprintf(f, "\\begin{tikzpicture}[->, >=stealth, node distance=2cm]\n");
+
+        // Dibujar nodos en línea horizontal
+        for (int i = 0; i < S->paths.lens[r]; i++) {
+            int year = S->paths.paths[r][i];
+            // Node name is unique: prefix with path index AND year
+            fprintf(f, "\\node (R%dY%d) at (%d,0) {%d};\n", r, year, i*2, year);
+        }
+
+        // Dibujar aristas
+        for (int i = 0; i < S->paths.lens[r]-1; i++) {
+            int from = S->paths.paths[r][i];
+            int to   = S->paths.paths[r][i+1];
+            fprintf(f, "\\draw[->] (R%dY%d) -- (R%dY%d);\n", r, from, r, to);
+        }
+
+        fprintf(f, "\\end{tikzpicture}\n\\bigskip\n");
+    }
+}
+
+
 static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const char *fname) {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
@@ -482,15 +507,23 @@ static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const 
     g_snprintf(dir, sizeof(dir), "reports/replace-%04d%02d%02d-%02d%02d%02d",
                tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
                tm.tm_hour, tm.tm_min, tm.tm_sec);
-    g_mkdir_with_parents(dir, 0755);
 
-    // 2) Rutas de archivos
-    char tex[512]; g_snprintf(tex, sizeof(tex), "%s/replace.tex", dir);
-    char pdf[512]; g_snprintf(pdf, sizeof(pdf), "%s/replace.pdf", dir);
+    if (g_mkdir_with_parents(dir, 0755) != 0) {
+        g_printerr("[ERROR] No se pudo crear el directorio: %s\n", dir);
+        return -1;
+    }
+
+    // 2) Archivo TEX dentro de la carpeta
+    char tex[512];
+    g_snprintf(tex, sizeof(tex), "%s/replace.tex", dir);
+
+    FILE *f = fopen(tex, "w");
+    if (!f) {
+        g_printerr("[ERROR] No se pudo abrir para escritura: %s\n", tex);
+        return -1;
+    }
 
     // 3) Escribir LaTeX
-    FILE *f = fopen(tex, "w");
-    if (!f) return -1;
     fprintf(f,
         "\\documentclass[11pt]{article}\n"
         "\\usepackage[margin=2.5cm]{geometry}\n"
@@ -499,7 +532,9 @@ static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const 
         "\\usepackage{amsmath}\n"
         "\\usepackage[T1]{fontenc}\n"
         "\\usepackage[utf8]{inputenc}\n"
-        "\\usepackage[spanish]{babel}\n"
+        "\\usepackage{tikz}\n"
+        "\\usetikzlibrary{positioning}\n"
+        "\\tikzset{every node/.style={circle, draw, minimum size=8mm}}\n"
         "\\begin{document}\n"
     );
     escribir_portada(f);
@@ -507,54 +542,38 @@ static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const 
     escribir_ctx(f, p, S);
     escribir_tabla_G(f, p, S);
     escribir_rutas(f, p, S);
+    generar_grafos_rutas(f, p, S);
     fprintf(f, "\\end{document}\n");
     fclose(f);
 
-    // 4) Compilar y abrir con evince en modo presentación
-    char cmd[1024];
-    g_snprintf(cmd, sizeof(cmd),
-               "cd '%s' && pdflatex -interaction=nonstopmode -halt-on-error replace.tex >/dev/null 2>&1 "
-               "&& (setsid evince -s 'replace.pdf' >/dev/null 2>&1 &)",
-               dir);
+    g_printerr("[INFO] Archivo TEX generado: %s\n", tex);
 
-    int r = system(cmd);
-    if (r == -1) {
-        g_printerr("Fallo al invocar pdflatex/evince\n");
+    // 4) Compilar dentro del directorio
+    gchar *cmd_compile = g_strdup_printf(
+        "cd '%s' && pdflatex -interaction=nonstopmode -halt-on-error replace.tex",
+        dir
+    );
+    int ret = system(cmd_compile);
+    g_free(cmd_compile);
+
+    if (ret != 0) {
+        g_printerr("[ERROR] pdflatex falló con código %d\n", ret);
         return -1;
     }
+
+    // 5) Abrir PDF en modo presentación
+    gchar *pdfpath = g_build_filename(dir, "replace.pdf", NULL);
+    gchar *cmd_open = g_strdup_printf(
+        "evince --presentation '%s' >/dev/null 2>&1 &",
+        pdfpath
+    );
+    system(cmd_open);
+    g_free(cmd_open);
+    g_free(pdfpath);
 
     return 0;
 }
 
-// Sin warnings: usa g_spawn en lugar de system()
-static void compilar_y_abrir_pdf(const char *tex) {
-    GError *err = NULL;
-    gchar *cmd1 = g_strdup_printf("pdflatex -interaction=nonstopmode -halt-on-error %s", tex);
-
-    if (!g_spawn_command_line_sync(cmd1, NULL, NULL, NULL, &err)) {
-        g_printerr("pdflatex error: %s\n", err->message); g_clear_error(&err);
-    }
-    if (!g_spawn_command_line_sync(cmd1, NULL, NULL, NULL, &err)) {
-        g_printerr("pdflatex error: %s\n", err->message); g_clear_error(&err);
-    }
-    g_free(cmd1);
-
-    gchar *pdf = g_strdup(tex);
-    gchar *dot = strrchr(pdf, '.');
-    if (dot) strcpy(dot, ".pdf");
-
-    if (g_file_test(pdf, G_FILE_TEST_IS_REGULAR)) {
-        gchar *cmd2 = g_strdup_printf("xdg-open \"%s\"", pdf);
-        if (!g_spawn_command_line_async(cmd2, &err)) {
-            g_printerr("No pude abrir el PDF: %s\n", err->message); g_clear_error(&err);
-        }
-        g_free(cmd2);
-    } else {
-        g_printerr("No se generó el PDF (%s). Revisa el log de LaTeX (reporte.log).\n", pdf);
-    }
-
-    g_free(pdf);
-}
 
 // ==============================
 // --------- Lectura UI ---------

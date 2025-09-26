@@ -1,0 +1,107 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\tikzset{every node/.style={circle, draw, minimum size=8mm}}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large Instituto Tecnol\'ogico de Costa Rica\\Escuela de Computaci\'on}\vspace{1cm}
+{\huge Proyecto: Reemplazo de Equipos}\vspace{1cm}
+{\large II Semestre 2025}\vspace{2cm}
+{\large Estudiante(s):}\\Esteban Secaida (y equipo)\vfill
+{\large Fecha: \today}
+\end{titlepage}
+\section*{Datos del Problema}
+Costo inicial: $100.00$, Horizonte $T=10$, Vida \'util $L=3$.\\
+\textbf{Sin ganancia por uso}.\\
+\textbf{Sin inflaci\'on}.\\
+\subsection*{Mantenimiento y Reventa por Edad}
+\begin{tabular}{c|c|c}\toprule
+Edad & Mant. & Reventa\\\midrule
+1 & 100.00 & 400.00 \\
+2 & 200.00 & 200.00 \\
+3 & 300.00 & 600.00 \\
+\bottomrule\end{tabular}
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}(\text{Mant}(k))\cdot(1+i)^{k-1}-\text{Reventa}(x-t)\cdot(1+i)^{x-t-1}$ si hay inflaci\'on.\\
+\section*{Tabla de $C_{t,x}$}
+Entradas v\'alidas con $t<x\le\min(t+L,T)$.
+
+\begin{tabular}{c|c|c}\toprule
+ t & x & $C_{t,x}$ \\\midrule
+0 & 1 & -200.00 \\
+0 & 2 & 200.00 \\
+0 & 3 & 100.00 \\
+1 & 2 & -200.00 \\
+1 & 3 & 200.00 \\
+1 & 4 & 100.00 \\
+2 & 3 & -200.00 \\
+2 & 4 & 200.00 \\
+2 & 5 & 100.00 \\
+3 & 4 & -200.00 \\
+3 & 5 & 200.00 \\
+3 & 6 & 100.00 \\
+4 & 5 & -200.00 \\
+4 & 6 & 200.00 \\
+4 & 7 & 100.00 \\
+5 & 6 & -200.00 \\
+5 & 7 & 200.00 \\
+5 & 8 & 100.00 \\
+6 & 7 & -200.00 \\
+6 & 8 & 200.00 \\
+6 & 9 & 100.00 \\
+7 & 8 & -200.00 \\
+7 & 9 & 200.00 \\
+7 & 10 & 100.00 \\
+8 & 9 & -200.00 \\
+8 & 10 & 200.00 \\
+9 & 10 & -200.00 \\
+\bottomrule\end{tabular}
+\section*{Programaci\'on Din\'amica: $G(t)$ y Siguientes}
+\begin{tabular}{c|c|l}\toprule
+ t & $G(t)$ & Siguientes \\\midrule
+0 & -2000.00 & 1 \\
+1 & -1800.00 & 2 \\
+2 & -1600.00 & 3 \\
+3 & -1400.00 & 4 \\
+4 & -1200.00 & 5 \\
+5 & -1000.00 & 6 \\
+6 & -800.00 & 7 \\
+7 & -600.00 & 8 \\
+8 & -400.00 & 9 \\
+9 & -200.00 & 10 \\
+10 & 0.00 &  \\
+\bottomrule\end{tabular}
+\section*{Todos los planes \`optimos}
+Costo m\'inimo total: $G(0)=\mathbf{-2000.00}$.\\
+\noindent Ruta 1: \texttt{0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10}\\
+\subsection*{Ruta óptima 1}
+\begin{tikzpicture}[->, >=stealth, node distance=2cm]
+\node (R0Y1) at (0,0) {1};
+\node (R0Y2) at (2,0) {2};
+\node (R0Y3) at (4,0) {3};
+\node (R0Y4) at (6,0) {4};
+\node (R0Y5) at (8,0) {5};
+\node (R0Y6) at (10,0) {6};
+\node (R0Y7) at (12,0) {7};
+\node (R0Y8) at (14,0) {8};
+\node (R0Y9) at (16,0) {9};
+\node (R0Y10) at (18,0) {10};
+\draw[->] (R0Y1) -- (R0Y2);
+\draw[->] (R0Y2) -- (R0Y3);
+\draw[->] (R0Y3) -- (R0Y4);
+\draw[->] (R0Y4) -- (R0Y5);
+\draw[->] (R0Y5) -- (R0Y6);
+\draw[->] (R0Y6) -- (R0Y7);
+\draw[->] (R0Y7) -- (R0Y8);
+\draw[->] (R0Y8) -- (R0Y9);
+\draw[->] (R0Y9) -- (R0Y10);
+\end{tikzpicture}
+\bigskip
+\end{document}
