@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=$(shell pkg-config --cflags gtk+-3.0) -Wall -Wextra -g
-LDFLAGS=$(shell pkg-config --libs gtk+-3.0)
+LDFLAGS=$(shell pkg-config --libs gtk+-3.0) -lm
 
 BIN_DIR=bin
 SRC_DIR=src

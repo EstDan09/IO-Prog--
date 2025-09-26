@@ -474,7 +474,22 @@ static void escribir_rutas(FILE *f, const ReemplazoData *p, const SolveOut *S) {
 }
 
 static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const char *fname) {
-    FILE *f = fopen(fname, "w");
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+
+    // 1) Crear carpeta con timestamp
+    char dir[256];
+    g_snprintf(dir, sizeof(dir), "reports/replace-%04d%02d%02d-%02d%02d%02d",
+               tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
+               tm.tm_hour, tm.tm_min, tm.tm_sec);
+    g_mkdir_with_parents(dir, 0755);
+
+    // 2) Rutas de archivos
+    char tex[512]; g_snprintf(tex, sizeof(tex), "%s/replace.tex", dir);
+    char pdf[512]; g_snprintf(pdf, sizeof(pdf), "%s/replace.pdf", dir);
+
+    // 3) Escribir LaTeX
+    FILE *f = fopen(tex, "w");
     if (!f) return -1;
     fprintf(f,
         "\\documentclass[11pt]{article}\n"
@@ -494,6 +509,20 @@ static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const 
     escribir_rutas(f, p, S);
     fprintf(f, "\\end{document}\n");
     fclose(f);
+
+    // 4) Compilar y abrir con evince en modo presentación
+    char cmd[1024];
+    g_snprintf(cmd, sizeof(cmd),
+               "cd '%s' && pdflatex -interaction=nonstopmode -halt-on-error replace.tex >/dev/null 2>&1 "
+               "&& (setsid evince -s 'replace.pdf' >/dev/null 2>&1 &)",
+               dir);
+
+    int r = system(cmd);
+    if (r == -1) {
+        g_printerr("Fallo al invocar pdflatex/evince\n");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -621,7 +650,7 @@ G_MODULE_EXPORT void on_btnEjecutar_clicked(GtkButton *b, gpointer u) {
     solve_caso(p, &S);
 
     if (generar_reporte_tex(p, &S, "reporte.tex") == 0) {
-        compilar_y_abrir_pdf("reporte.tex");
+        // compilar_y_abrir_pdf("reporte.tex");
     } else {
         g_printerr("No se pudo crear reporte.tex\n");
     }

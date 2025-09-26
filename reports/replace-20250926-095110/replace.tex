@@ -1,0 +1,86 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large Instituto Tecnol\'ogico de Costa Rica\\Escuela de Computaci\'on}\vspace{1cm}
+{\huge Proyecto: Reemplazo de Equipos}\vspace{1cm}
+{\large II Semestre 2025}\vspace{2cm}
+{\large Estudiante(s):}\\Esteban Secaida (y equipo)\vfill
+{\large Fecha: \today}
+\end{titlepage}
+\section*{Datos del Problema}
+Costo inicial: $500.00$, Horizonte $T=10$, Vida \'util $L=3$.\\
+\textbf{Sin ganancia por uso}.\\
+\textbf{Sin inflaci\'on}.\\
+\subsection*{Mantenimiento y Reventa por Edad}
+\begin{tabular}{c|c|c}\toprule
+Edad & Mant. & Reventa\\\midrule
+1 & 200.00 & 90.00 \\
+2 & 150.00 & 80.00 \\
+3 & 100.00 & 0.00 \\
+\bottomrule\end{tabular}
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}(\text{Mant}(k))\cdot(1+i)^{k-1}-\text{Reventa}(x-t)\cdot(1+i)^{x-t-1}$ si hay inflaci\'on.\\
+\section*{Tabla de $C_{t,x}$}
+Entradas v\'alidas con $t<x\le\min(t+L,T)$.
+
+\begin{tabular}{c|c|c}\toprule
+ t & x & $C_{t,x}$ \\\midrule
+0 & 1 & 610.00 \\
+0 & 2 & 770.00 \\
+0 & 3 & 950.00 \\
+1 & 2 & 610.00 \\
+1 & 3 & 770.00 \\
+1 & 4 & 950.00 \\
+2 & 3 & 610.00 \\
+2 & 4 & 770.00 \\
+2 & 5 & 950.00 \\
+3 & 4 & 610.00 \\
+3 & 5 & 770.00 \\
+3 & 6 & 950.00 \\
+4 & 5 & 610.00 \\
+4 & 6 & 770.00 \\
+4 & 7 & 950.00 \\
+5 & 6 & 610.00 \\
+5 & 7 & 770.00 \\
+5 & 8 & 950.00 \\
+6 & 7 & 610.00 \\
+6 & 8 & 770.00 \\
+6 & 9 & 950.00 \\
+7 & 8 & 610.00 \\
+7 & 9 & 770.00 \\
+7 & 10 & 950.00 \\
+8 & 9 & 610.00 \\
+8 & 10 & 770.00 \\
+9 & 10 & 610.00 \\
+\bottomrule\end{tabular}
+\section*{Programaci\'on Din\'amica: $G(t)$ y Siguientes}
+\begin{tabular}{c|c|l}\toprule
+ t & $G(t)$ & Siguientes \\\midrule
+0 & 3440.00 & 2, 3 \\
+1 & 2850.00 & 4 \\
+2 & 2670.00 & 4, 5 \\
+3 & 2490.00 & 5, 6 \\
+4 & 1900.00 & 7 \\
+5 & 1720.00 & 7, 8 \\
+6 & 1540.00 & 8 \\
+7 & 950.00 & 10 \\
+8 & 770.00 & 10 \\
+9 & 610.00 & 10 \\
+10 & 0.00 &  \\
+\bottomrule\end{tabular}
+\section*{Todos los planes \`optimos}
+Costo m\'inimo total: $G(0)=\mathbf{3440.00}$.\\
+\noindent Ruta 1: \texttt{0 -> 2 -> 4 -> 7 -> 10}\\
+\noindent Ruta 2: \texttt{0 -> 2 -> 5 -> 7 -> 10}\\
+\noindent Ruta 3: \texttt{0 -> 2 -> 5 -> 8 -> 10}\\
+\noindent Ruta 4: \texttt{0 -> 3 -> 5 -> 7 -> 10}\\
+\noindent Ruta 5: \texttt{0 -> 3 -> 5 -> 8 -> 10}\\
+\noindent Ruta 6: \texttt{0 -> 3 -> 6 -> 8 -> 10}\\
+\end{document}
