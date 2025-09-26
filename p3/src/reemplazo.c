@@ -1,8 +1,8 @@
-// reemplazo.c - Único archivo con UI + DP + PDF
-// Compilar (GTK3):
+// reemplazo.c - Único archivo con UI + DP + PDF (GTK3)
+// Compilar:
 //   gcc -O2 -Wall -o reemplazo reemplazo.c `pkg-config --cflags --libs gtk+-3.0`
 //
-// Requiere: pdflatex y evince en PATH. Glade en: p3/ui/reemplazo.glade
+// Requiere: pdflatex y xdg-open en PATH. Glade: nuevo.glade
 
 #include <gtk/gtk.h>
 #include <stdio.h>
@@ -62,6 +62,10 @@ typedef struct {
 static GtkBuilder *builder;
 static GtkWidget *entryCosto, *spinPlazo, *spinVida, *tabla;
 static GtkWidget *btnGuardar, *btnCargar, *btnEjecutar, *btnSalir;
+// NUEVOS (si existen en el glade; si no, se crean al vuelo)
+static GtkWidget *spinDeprec = NULL;     // depreciación anual
+static GtkWidget *spinMantBase = NULL;   // mantenimiento base
+static GtkWidget *spinMantInc  = NULL;   // incremento anual mant.
 
 // ==============================
 // ------ Utilitarios simples ----
@@ -75,16 +79,117 @@ static void* xmalloc(size_t n){
     return p;
 }
 
+static const char* safe_entry_text(GtkWidget *e){
+    return (e && GTK_IS_ENTRY(e)) ? gtk_entry_get_text(GTK_ENTRY(e)) : "0";
+}
+
+static double safe_spin_value(GtkWidget *w, double def){
+    if (w && GTK_IS_SPIN_BUTTON(w)) return gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+    return def;
+}
+
+// =====================================================
+// --------- Tabla editable (Edad, Mant., Reventa) -----
+// =====================================================
+enum { COL_EDAD = 0, COL_MANT, COL_REVENTA, N_COLS };
+
+static GtkListStore* tabla_get_store(void){
+    if (!tabla || !GTK_IS_TREE_VIEW(tabla)) return NULL;
+    GtkTreeModel *m = gtk_tree_view_get_model(GTK_TREE_VIEW(tabla));
+    return GTK_IS_LIST_STORE(m) ? GTK_LIST_STORE(m) : NULL;
+}
+
+static void cell_edited_double(GtkCellRendererText *r, gchar *path, gchar *new_text, gpointer col_ptr){
+    int col = GPOINTER_TO_INT(col_ptr);
+    GtkListStore *store = tabla_get_store();
+    if (!store) return;
+
+    char *endp = NULL;
+    double val = g_strtod(new_text, &endp);
+    if (endp == new_text) return; // no parseó
+
+    GtkTreeIter it;
+    if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(store), &it, path)){
+        gtk_list_store_set(store, &it, col, val, -1);
+    }
+}
+
+static void tabla_init_if_needed(void){
+    if (!tabla || !GTK_IS_TREE_VIEW(tabla)) return;
+    if (tabla_get_store()) return; // ya inicializada
+
+    // Modelo
+    GtkListStore *store = gtk_list_store_new(N_COLS, G_TYPE_INT, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tabla), GTK_TREE_MODEL(store));
+    g_object_unref(store);
+
+    // Columna Edad (solo lectura)
+    GtkCellRenderer *rnd = gtk_cell_renderer_text_new();
+    GtkTreeViewColumn *col = gtk_tree_view_column_new_with_attributes("Edad", rnd, "text", COL_EDAD, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tabla), col);
+
+    // Columna Mant. (editable)
+    GtkCellRenderer *rnd_m = gtk_cell_renderer_text_new();
+    g_object_set(rnd_m, "editable", TRUE, NULL);
+    g_signal_connect(rnd_m, "edited", G_CALLBACK(cell_edited_double), GINT_TO_POINTER(COL_MANT));
+    GtkTreeViewColumn *col_m = gtk_tree_view_column_new_with_attributes("Mant.", rnd_m, "text", COL_MANT, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tabla), col_m);
+
+    // Columna Reventa (editable)
+    GtkCellRenderer *rnd_r = gtk_cell_renderer_text_new();
+    g_object_set(rnd_r, "editable", TRUE, NULL);
+    g_signal_connect(rnd_r, "edited", G_CALLBACK(cell_edited_double), GINT_TO_POINTER(COL_REVENTA));
+    GtkTreeViewColumn *col_r = gtk_tree_view_column_new_with_attributes("Reventa", rnd_r, "text", COL_REVENTA, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tabla), col_r);
+}
+
+static void tabla_resize_rows(int L){
+    GtkListStore *store = tabla_get_store();
+    if (!store) return;
+
+    gtk_list_store_clear(store);
+    for (int k=1; k<=L; ++k){
+        GtkTreeIter it;
+        gtk_list_store_append(store, &it);
+        gtk_list_store_set(store, &it,
+                           COL_EDAD, k,
+                           COL_MANT, 0.0,
+                           COL_REVENTA, 0.0, -1);
+    }
+}
+
+static int tabla_leer_a_vectores(int L, double *mant, double *rev){
+    GtkListStore *store = tabla_get_store();
+    if (!store) return 0;
+
+    GtkTreeModel *m = GTK_TREE_MODEL(store);
+    GtkTreeIter it;
+    int idx = 1;
+    if (gtk_tree_model_get_iter_first(m, &it)){
+        do {
+            int edad=0; double mm=0.0, rr=0.0;
+            gtk_tree_model_get(m, &it, COL_EDAD, &edad, COL_MANT, &mm, COL_REVENTA, &rr, -1);
+            if (edad>=1 && edad<=L){
+                mant[edad] = mm;
+                rev[edad]  = rr;
+            }
+            idx++;
+        } while (gtk_tree_model_iter_next(m, &it) && idx<=L);
+    }
+    // Validar: ¿hay al menos una celda no-cero?
+    int any = 0;
+    for (int k=1;k<=L;k++){
+        if (mant[k]!=0.0 || rev[k]!=0.0){ any=1; break; }
+    }
+    return any;
+}
+
 // ==============================
 // --------- I/O archivos -------
 // ==============================
-// Formato simple:
-// costo plazo vida
-// (luego 'plazo' filas: i reventa mantenimiento)
-// Se usan hasta 'vida' filas para edad; si faltan, se repite la última
 void guardar_problema(const char *fname, ReemplazoData *p) {
     FILE *f = fopen(fname, "w");
-    if (!f) return;
+    if (!f) { g_printerr("No pude abrir %s para escribir\n", fname); return; }
     fprintf(f, "%.10g %d %d\n", p->costo_inicial, p->plazo, p->vida_util);
     for (int i = 0; i < p->plazo; i++) {
         int per = (p->periodos && p->periodos[i].periodo>0) ? p->periodos[i].periodo : (i+1);
@@ -97,17 +202,16 @@ void guardar_problema(const char *fname, ReemplazoData *p) {
 
 ReemplazoData *cargar_problema(const char *fname) {
     FILE *f = fopen(fname, "r");
-    if (!f) return NULL;
+    if (!f) { g_printerr("No pude abrir %s para lectura\n", fname); return NULL; }
     ReemplazoData *p = (ReemplazoData*)xmalloc(sizeof(ReemplazoData));
     if (fscanf(f, "%lf %d %d", &p->costo_inicial, &p->plazo, &p->vida_util) != 3) {
-        fclose(f); free(p); return NULL;
+        fclose(f); free(p); g_printerr("Formato inválido de cabecera en %s\n", fname); return NULL;
     }
-    if (p->plazo <= 0) { fclose(f); free(p); return NULL; }
+    if (p->plazo <= 0) { fclose(f); free(p); g_printerr("Plazo inválido en %s\n", fname); return NULL; }
     p->periodos = (Periodo*)xmalloc(sizeof(Periodo) * p->plazo);
     for (int i = 0; i < p->plazo; i++) {
         int per=0; double rev=0, man=0;
         if (fscanf(f, "%d %lf %lf", &per, &rev, &man) != 3) {
-            // si faltan filas, rellenamos con última válida o ceros
             if (i>0){ per=i+1; rev=p->periodos[i-1].reventa; man=p->periodos[i-1].mantenimiento; }
             else    { per=i+1; rev=0; man=0; }
         }
@@ -123,32 +227,34 @@ ReemplazoData *cargar_problema(const char *fname) {
 // ------ Núcleo de solución -----
 // ==============================
 
-// Construye series por edad (1..L): mant[edad], rev[edad]
-// Toma de p->periodos (si hay menos de L, repite el último)
 static void construir_series_edad(const ReemplazoData *p, double *mant, double *rev) {
     int L = p->vida_util;
-    // base: intenta leer de periodos por índice (se asume i ~ edad)
-    for (int k=1; k<=L; ++k) {
-        int idx = k-1;
-        if (idx < p->plazo) {
-            // si el archivo trae valores por "periodo", usamos los de esa fila
-            mant[k] = p->periodos[idx].mantenimiento;
-            rev[k]  = p->periodos[idx].reventa;
-        } else {
-            // extrapolar último
-            mant[k] = mant[k-1];
-            rev[k]  = rev[k-1];
+
+    // 1) Intentar leer DIRECTO de la tabla si existe
+    for (int k=1;k<=L;k++){ mant[k]=0; rev[k]=0; }
+    int ok = tabla_leer_a_vectores(L, mant, rev);
+
+    // 2) Si la tabla no tenía datos, usar lo que venga en p->periodos
+    if (!ok) {
+        for (int k=1; k<=L; ++k) {
+            int idx = k-1;
+            if (idx < p->plazo) {
+                mant[k] = p->periodos[idx].mantenimiento;
+                rev[k]  = p->periodos[idx].reventa;
+            } else if (k>1) {
+                mant[k] = mant[k-1];
+                rev[k]  = rev[k-1];
+            }
         }
     }
-    // sanity: si alguna entrada no quedó inicializada (poco probable)
+    // Sanitizar
     for (int k=1; k<=L; ++k) {
         if (isnan(mant[k])) mant[k]=0;
         if (isnan(rev[k]))  rev[k]=0;
     }
 }
 
-// Llena matriz C[t][x] para 0<=t<T y t+1<=x<=min(t+L,T)
-// C_{t,x} = costo_inicial + sum_{k=1..edad} mant[k] - rev[edad], con edad = x-t
+// Llena C[t][x]
 static void construir_C(const ReemplazoData *p, double C[MAX_T+2][MAX_T+2]) {
     int T = p->plazo;
     int L = p->vida_util;
@@ -172,10 +278,9 @@ static void construir_C(const ReemplazoData *p, double C[MAX_T+2][MAX_T+2]) {
     }
 }
 
-// DP hacia atrás: G[T]=0; G[t]=min_x {C[t][x]+G[x]}; guardando TODOS los argmin
+// DP hacia atrás
 static void dp_resolver(const ReemplazoData *p, double C[MAX_T+2][MAX_T+2], DPRes *R) {
     int T = p->plazo;
-    int L = p->vida_util;
     for (int t=0; t<=T; ++t) {
         R->G[t] = INF;
         R->nxt[t].count = 0;
@@ -184,14 +289,12 @@ static void dp_resolver(const ReemplazoData *p, double C[MAX_T+2][MAX_T+2], DPRe
 
     for (int t=T-1; t>=0; --t) {
         double best = INF;
-        int x_max = mini(t+L, T);
-        // mínimo
+        int x_max = mini(t+ p->vida_util, T);
         for (int x=t+1; x<=x_max; ++x) {
             double val = C[t][x] + R->G[x];
             if (val < best) best = val;
         }
         R->G[t] = best;
-        // empates
         for (int x=t+1; x<=x_max; ++x) {
             double val = C[t][x] + R->G[x];
             if (fabs(val - best) < 1e-9) {
@@ -295,12 +398,12 @@ static void escribir_problema(FILE *f, const ReemplazoData *p) {
 }
 
 static void escribir_ctx(FILE *f, const ReemplazoData *p, const SolveOut *S) {
-    int T=p->plazo, L=p->vida_util;
+    int T=p->plazo;
     fprintf(f, "\\section*{Tabla de $C_{t,x}$}\n");
     fprintf(f, "Entradas v\\'alidas con $t<x\\le\\min(t+L,T)$.\n\n");
     fprintf(f, "\\begin{tabular}{c|c|c}\\toprule\n t & x & $C_{t,x}$ \\\\\\midrule\n");
     for (int t=0;t<T;++t) {
-        int x_max = mini(t+L, T);
+        int x_max = mini(t+p->vida_util, T);
         for (int x=t+1;x<=x_max;++x) {
             fprintf(f, "%d & %d & %.2f \\\\\n", t, x, S->C[t][x]);
         }
@@ -325,7 +428,7 @@ static void escribir_rutas(FILE *f, const ReemplazoData *p, const SolveOut *S) {
     fprintf(f, "\\section*{Todos los planes \\`optimos}\n");
     fprintf(f, "Costo m\\'inimo total: $G(0)=\\mathbf{%.2f}$.\\\\\n", S->R.G[0]);
     int mostrar = S->paths.num_paths;
-    if (mostrar > 200) mostrar = 200; // evitar PDFs gigantes
+    if (mostrar > 200) mostrar = 200;
     for (int pth=0; pth<mostrar; ++pth) {
         char ruta[1024]={0};
         format_ruta(ruta, sizeof(ruta), S->paths.paths[pth], S->paths.lens[pth]);
@@ -339,11 +442,17 @@ static void escribir_rutas(FILE *f, const ReemplazoData *p, const SolveOut *S) {
 static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const char *fname) {
     FILE *f = fopen(fname, "w");
     if (!f) return -1;
-    fprintf(f, "\\documentclass[11pt]{article}\n"
-               "\\usepackage[margin=2.5cm]{geometry}\n"
-               "\\usepackage{booktabs}\n"
-               "\\usepackage{hyperref}\n"
-               "\\begin{document}\n");
+    fprintf(f,
+        "\\documentclass[11pt]{article}\n"
+        "\\usepackage[margin=2.5cm]{geometry}\n"
+        "\\usepackage{booktabs}\n"
+        "\\usepackage{hyperref}\n"
+        "\\usepackage{amsmath}\n"
+        "\\usepackage[T1]{fontenc}\n"
+        "\\usepackage[utf8]{inputenc}\n"
+        "\\usepackage[spanish]{babel}\n"
+        "\\begin{document}\n"
+    );
     escribir_portada(f);
     escribir_problema(f, p);
     escribir_ctx(f, p, S);
@@ -354,40 +463,65 @@ static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const 
     return 0;
 }
 
+// Sin warnings: usa g_spawn en lugar de system()
 static void compilar_y_abrir_pdf(const char *tex) {
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd), "pdflatex -interaction=nonstopmode -halt-on-error %s > /dev/null", tex);
-    system(cmd);
-    system(cmd);
-    char pdf[512];
-    strncpy(pdf, tex, sizeof(pdf)-1);
-    char *dot = strrchr(pdf, '.'); if (dot) strcpy(dot, ".pdf");
-    snprintf(cmd, sizeof(cmd), "evince \"%s\" &", pdf);
-    system(cmd);
+    GError *err = NULL;
+    gchar *cmd1 = g_strdup_printf("pdflatex -interaction=nonstopmode -halt-on-error %s", tex);
+
+    if (!g_spawn_command_line_sync(cmd1, NULL, NULL, NULL, &err)) {
+        g_printerr("pdflatex error: %s\n", err->message); g_clear_error(&err);
+    }
+    if (!g_spawn_command_line_sync(cmd1, NULL, NULL, NULL, &err)) {
+        g_printerr("pdflatex error: %s\n", err->message); g_clear_error(&err);
+    }
+    g_free(cmd1);
+
+    gchar *pdf = g_strdup(tex);
+    gchar *dot = strrchr(pdf, '.');
+    if (dot) strcpy(dot, ".pdf");
+
+    if (g_file_test(pdf, G_FILE_TEST_IS_REGULAR)) {
+        gchar *cmd2 = g_strdup_printf("xdg-open \"%s\"", pdf);
+        if (!g_spawn_command_line_async(cmd2, &err)) {
+            g_printerr("No pude abrir el PDF: %s\n", err->message); g_clear_error(&err);
+        }
+        g_free(cmd2);
+    } else {
+        g_printerr("No se generó el PDF (%s). Revisa el log de LaTeX (reporte.log).\n", pdf);
+    }
+
+    g_free(pdf);
 }
 
 // ==============================
 // --------- Lectura UI ---------
 // ==============================
+static double g_deprec = 100.0;    // por si la tabla no se usa
+static double g_mant_base = 0.0;
+static double g_mant_inc  = 0.0;
 
-// Si en esta fase no tienes editables reales en la tabla del Glade,
-// puedes arrancar con este generador "demo" para guardar y luego editar el archivo:
 static void rellenar_demo(ReemplazoData *p){
-    // ejemplo base: decaimiento de reventa y mantenimiento creciente
+    // Fallback lineal si la tabla no tiene datos
+    g_deprec     = safe_spin_value(spinDeprec,    g_deprec);
+    g_mant_base  = safe_spin_value(spinMantBase,  g_mant_base);
+    g_mant_inc   = safe_spin_value(spinMantInc,   g_mant_inc);
+
     for (int i=0;i<p->plazo;i++){
-        p->periodos[i].periodo = i+1;
-        // usa clamps para valores razonables si cambias L/T
-        p->periodos[i].reventa = clampd( (i+1)<=p->vida_util ? (400.0 - 100.0*i) : 0.0, 0.0, 1e9 );
-        p->periodos[i].mantenimiento = clampd( (i+1)<=p->vida_util ? (20.0 + 10.0*i) : 0.0, 0.0, 1e9 );
+        int edad = i+1;
+        p->periodos[i].periodo = edad;
+        double rev = p->costo_inicial - edad * g_deprec;
+        if (rev < 0 || edad > p->vida_util) rev = 0.0;
+        p->periodos[i].reventa = clampd(rev, 0.0, 1e12);
+        double man = g_mant_base + g_mant_inc * (edad - 1);
+        if (edad > p->vida_util) man = 0.0;
+        p->periodos[i].mantenimiento = clampd(man, 0.0, 1e12);
     }
 }
 
-// Lee desde widgets básicos (entry/spins). La tabla real no se usa aquí;
-// se recomienda gestionar periodos vía archivo (Guardar→editar→Cargar)
 static ReemplazoData leer_desde_widgets_o_demo(void){
     ReemplazoData p;
     memset(&p, 0, sizeof(p));
-    p.costo_inicial = atof(gtk_entry_get_text(GTK_ENTRY(entryCosto)));
+    p.costo_inicial = atof(safe_entry_text(entryCosto));
     p.plazo = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinPlazo));
     p.vida_util = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinVida));
 
@@ -396,13 +530,37 @@ static ReemplazoData leer_desde_widgets_o_demo(void){
     if (p.vida_util > p.plazo) p.vida_util = p.plazo;
 
     p.periodos = (Periodo*)xmalloc(sizeof(Periodo)*p.plazo);
-    rellenar_demo(&p); // puedes reemplazar por lectura de tu GtkTreeView si ya lo tienes cableado
+
+    // Intentar leer de la tabla; si no hay valores, usar demo lineal
+    double mant[MAX_L+2]={0}, rev[MAX_L+2]={0};
+    int ok = tabla_leer_a_vectores(p.vida_util, mant, rev);
+    if (ok){
+        for (int i=0;i<p.plazo;i++){
+            int edad = i+1;
+            p.periodos[i].periodo = edad;
+            if (edad<=p.vida_util){
+                p.periodos[i].mantenimiento = mant[edad];
+                p.periodos[i].reventa = rev[edad];
+            }else{
+                p.periodos[i].mantenimiento = 0.0;
+                p.periodos[i].reventa = 0.0;
+            }
+        }
+    }else{
+        rellenar_demo(&p);
+    }
     return p;
 }
 
 // ==============================
 // ----------- Callbacks --------
 // ==============================
+static void on_spinVida_changed(GtkSpinButton *s, gpointer u){
+    int L = gtk_spin_button_get_value_as_int(s);
+    tabla_init_if_needed();
+    tabla_resize_rows(L);
+}
+
 G_MODULE_EXPORT void on_btnGuardar_clicked(GtkButton *b, gpointer u) {
     ReemplazoData p = leer_desde_widgets_o_demo();
     guardar_problema("problema.rep", &p);
@@ -413,13 +571,27 @@ G_MODULE_EXPORT void on_btnGuardar_clicked(GtkButton *b, gpointer u) {
 G_MODULE_EXPORT void on_btnCargar_clicked(GtkButton *b, gpointer u) {
     ReemplazoData *p = cargar_problema("problema.rep");
     if (p) {
-        // Podrías volcar a los widgets si deseas
         char buf[64];
         snprintf(buf,sizeof(buf),"%.2f", p->costo_inicial);
         gtk_entry_set_text(GTK_ENTRY(entryCosto), buf);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinPlazo), p->plazo);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinVida), p->vida_util);
-        // (Si tienes tabla editable en UI, aquí la llenarías)
+
+        // Reflejar en la tabla
+        tabla_init_if_needed();
+        tabla_resize_rows(p->vida_util);
+        GtkListStore *store = tabla_get_store();
+        if (store){
+            for (int i=0;i<p->vida_util;i++){
+                GtkTreeIter it;
+                if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &it, NULL, i)){
+                    gtk_list_store_set(store, &it,
+                        COL_MANT, p->periodos[i].mantenimiento,
+                        COL_REVENTA, p->periodos[i].reventa, -1);
+                }
+            }
+        }
+
         g_print("Cargado: Costo=%.2f, Plazo=%d, Vida=%d\n", p->costo_inicial, p->plazo, p->vida_util);
         free(p->periodos);
         free(p);
@@ -431,24 +603,20 @@ G_MODULE_EXPORT void on_btnCargar_clicked(GtkButton *b, gpointer u) {
 G_MODULE_EXPORT void on_btnEjecutar_clicked(GtkButton *b, gpointer u) {
     ReemplazoData *p = cargar_problema("problema.rep");
     if (!p) {
-        // Si no hay archivo, ejecuta con datos de los widgets (demo)
         ReemplazoData tmp = leer_desde_widgets_o_demo();
         p = (ReemplazoData*)xmalloc(sizeof(ReemplazoData));
         *p = tmp; // shallow copy; tmp.periodos queda en p
     }
-    // Resolver
     SolveOut S;
     memset(&S, 0, sizeof(S));
     solve_caso(p, &S);
 
-    // Generar PDF
     if (generar_reporte_tex(p, &S, "reporte.tex") == 0) {
         compilar_y_abrir_pdf("reporte.tex");
     } else {
         g_printerr("No se pudo crear reporte.tex\n");
     }
 
-    // Limpieza
     pathset_free(&S.paths);
     free(p->periodos);
     free(p);
@@ -464,57 +632,65 @@ G_MODULE_EXPORT void on_btnSalir_clicked(GtkButton *b, gpointer u) {
 int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
 
-    // 1) Resolver ruta del .glade probando varias opciones relativas
-    const char *candidates[] = {
-        "p3/ui/nuevo.glade",   // si corres desde raíz del repo
-        "../ui/nuevo.glade",   // si corres desde p3/src  <-- TU CASO
-        "ui/nuevo.glade",      // por si mueves el binario a p3/
-        "nuevo.glade"          // por si lo dejas junto al binario
-    };
-    const int npaths = (int)(sizeof(candidates)/sizeof(candidates[0]));
+    // 1) Ruta al .glade: SOLO "nuevo.glade" (argv tiene prioridad)
     const char *glade_path = NULL;
-
-    for (int i = 0; i < npaths; ++i) {
-        if (g_file_test(candidates[i], G_FILE_TEST_IS_REGULAR)) {
-            glade_path = candidates[i];
-            break;
+    if (argc >= 2 && g_file_test(argv[1], G_FILE_TEST_IS_REGULAR)) {
+        glade_path = argv[1];
+    } else {
+        const char *candidates[] = {
+            "p3/ui/nuevo.glade",
+            "../ui/nuevo.glade",
+            "ui/nuevo.glade",
+            "nuevo.glade"
+        };
+        for (size_t i=0;i<sizeof(candidates)/sizeof(candidates[0]);++i) {
+            if (g_file_test(candidates[i], G_FILE_TEST_IS_REGULAR)) { glade_path = candidates[i]; break; }
         }
     }
 
     if (!glade_path) {
-        // Mensaje útil: imprime CWD y las rutas que intentó
         char *cwd = g_get_current_dir();
-        g_printerr("ERROR: No se encontró 'reemplazo.glade'. CWD: %s\n", cwd);
-        g_printerr("Se intentaron estas rutas relativas:\n");
-        for (int i = 0; i < npaths; ++i) g_printerr("  - %s\n", candidates[i]);
+        g_printerr("ERROR: No se encontró 'nuevo.glade'. CWD: %s\n", cwd);
+        g_printerr("Prueba ejecutando con ruta: ./reemplazo ../ui/nuevo.glade\n");
         g_free(cwd);
         return 1;
     }
 
     // 2) Cargar la UI
     builder = gtk_builder_new_from_file(glade_path);
-    GtkWidget *win = GTK_WIDGET(gtk_builder_get_object(builder, "ventanaPrincipal"));
-    if (!win) {
-        g_printerr("ERROR: No se encontró el objeto 'ventanaPrincipal' dentro de %s\n", glade_path);
-        return 1;
-    }
 
-    // 3) Obtener los widgets (los mismos IDs que ya usas)
-    entryCosto = GTK_WIDGET(gtk_builder_get_object(builder, "entryCostoInicial"));
-    spinPlazo  = GTK_WIDGET(gtk_builder_get_object(builder, "spinPlazo"));
-    spinVida   = GTK_WIDGET(gtk_builder_get_object(builder, "spinVidaUtil"));
-    tabla      = GTK_WIDGET(gtk_builder_get_object(builder, "tablaDatos"));
-    btnGuardar = GTK_WIDGET(gtk_builder_get_object(builder, "btnGuardar"));
-    btnCargar  = GTK_WIDGET(gtk_builder_get_object(builder, "btnCargar"));
-    btnEjecutar= GTK_WIDGET(gtk_builder_get_object(builder, "btnEjecutar"));
-    btnSalir   = GTK_WIDGET(gtk_builder_get_object(builder, "btnSalir"));
+    #define GETW(name) GTK_WIDGET(gtk_builder_get_object(builder, name))
+    #define ENSURE(wid, name) \
+        if (!(wid)) { g_printerr("ERROR: No existe el widget '%s' en %s\n", name, glade_path); return 1; }
 
-    // gtk_builder_connect_signals(builder, NULL);
+    GtkWidget *win = GETW("ventanaPrincipal");   ENSURE(win, "ventanaPrincipal");
 
-    g_signal_connect(btnGuardar, "clicked", G_CALLBACK(on_btnGuardar_clicked), NULL); 
-    g_signal_connect(btnCargar, "clicked", G_CALLBACK(on_btnCargar_clicked), NULL); 
-    g_signal_connect(btnEjecutar, "clicked", G_CALLBACK(on_btnEjecutar_clicked), NULL); 
-    g_signal_connect(btnSalir, "clicked", G_CALLBACK(on_btnSalir_clicked), NULL); 
+    // IDs del glade (existentes)
+    entryCosto = GETW("entryCosto");             ENSURE(entryCosto, "entryCosto");
+    spinPlazo  = GETW("spinPlazo");              ENSURE(spinPlazo,  "spinPlazo");
+    spinVida   = GETW("spinVida");               ENSURE(spinVida,   "spinVida");
+    tabla      = GETW("tabla");                  /* TreeView que convertimos en editable */
+
+    btnGuardar = GETW("btnGuardar");             ENSURE(btnGuardar, "btnGuardar");
+    btnCargar  = GETW("btnCargar");              ENSURE(btnCargar,  "btnCargar");
+    btnEjecutar= GETW("btnEjecutar");            ENSURE(btnEjecutar,"btnEjecutar");
+    btnSalir   = GETW("btnSalir");               ENSURE(btnSalir,   "btnSalir");
+
+    // Extras (si están en tu glade)
+    spinDeprec    = GETW("spinDeprec");
+    spinMantBase  = GETW("spinMantBase");
+    spinMantInc   = GETW("spinMantInc");
+
+    // Inicializar tabla y enganchar resize al cambio de L
+    tabla_init_if_needed();
+    tabla_resize_rows(gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinVida)));
+    g_signal_connect(spinVida, "value-changed", G_CALLBACK(on_spinVida_changed), NULL);
+
+    // 3) Señales a callbacks
+    g_signal_connect(btnGuardar,  "clicked", G_CALLBACK(on_btnGuardar_clicked),  NULL);
+    g_signal_connect(btnCargar,   "clicked", G_CALLBACK(on_btnCargar_clicked),   NULL);
+    g_signal_connect(btnEjecutar, "clicked", G_CALLBACK(on_btnEjecutar_clicked), NULL);
+    g_signal_connect(btnSalir,    "clicked", G_CALLBACK(on_btnSalir_clicked),    NULL);
 
     g_object_unref(builder);
 
@@ -522,5 +698,3 @@ int main(int argc, char *argv[]) {
     gtk_main();
     return 0;
 }
-
-
