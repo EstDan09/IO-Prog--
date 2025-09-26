@@ -17,6 +17,8 @@
 \end{titlepage}
 \section*{Datos del Problema}
 Costo inicial: $500,00$, Horizonte $T=5$, Vida \'util $L=3$.\\
+\textbf{Sin ganancia por uso}.\\
+\textbf{Sin inflaci\'on}.\\
 \subsection*{Mantenimiento y Reventa por Edad}
 \begin{tabular}{c|c|c}\toprule
 Edad & Mant. & Reventa\\\midrule
@@ -24,7 +26,7 @@ Edad & Mant. & Reventa\\\midrule
 2 & 40,00 & 300,00 \\
 3 & 60,00 & 250,00 \\
 \bottomrule\end{tabular}
-Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}\text{Mant}(k)-\text{Reventa}(x-t)$.
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}(\text{Mant}(k))\cdot(1+i)^{k-1}-\text{Reventa}(x-t)\cdot(1+i)^{x-t-1}$ si hay inflaci\'on.\\
 \section*{Tabla de $C_{t,x}$}
 Entradas v\'alidas con $t<x\le\min(t+L,T)$.
 

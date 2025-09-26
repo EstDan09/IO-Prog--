@@ -1,6 +1,6 @@
 // reemplazo.c - Único archivo con UI + DP + PDF (GTK3)
 // Compilar:
-//   gcc -O2 -Wall -o reemplazo reemplazo.c `pkg-config --cflags --libs gtk+-3.0`
+//   gcc -O2 -Wall -o reemplazo reemplazo.c `pkg-config --cflags --libs gtk+-3.0` -lm
 //
 // Requiere: pdflatex y xdg-open en PATH. Glade: nuevo.glade
 
@@ -62,10 +62,12 @@ typedef struct {
 static GtkBuilder *builder;
 static GtkWidget *entryCosto, *spinPlazo, *spinVida, *tabla;
 static GtkWidget *btnGuardar, *btnCargar, *btnEjecutar, *btnSalir;
-// NUEVOS (si existen en el glade; si no, se crean al vuelo)
-static GtkWidget *spinDeprec = NULL;     // depreciación anual
-static GtkWidget *spinMantBase = NULL;   // mantenimiento base
-static GtkWidget *spinMantInc  = NULL;   // incremento anual mant.
+
+// Opcionales del enunciado (si no están en glade, los creo)
+static GtkWidget *checkGanancia = NULL;  // activar ganancia por uso
+static GtkWidget *spinGanancia  = NULL;  // ganancia fija por período
+static GtkWidget *checkInflacion = NULL; // activar inflación
+static GtkWidget *spinInflacion  = NULL; // i (en %)
 
 // ==============================
 // ------ Utilitarios simples ----
@@ -82,10 +84,12 @@ static void* xmalloc(size_t n){
 static const char* safe_entry_text(GtkWidget *e){
     return (e && GTK_IS_ENTRY(e)) ? gtk_entry_get_text(GTK_ENTRY(e)) : "0";
 }
-
 static double safe_spin_value(GtkWidget *w, double def){
     if (w && GTK_IS_SPIN_BUTTON(w)) return gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
     return def;
+}
+static int safe_check_active(GtkWidget *w){
+    return (w && GTK_IS_TOGGLE_BUTTON(w)) ? gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)) : 0;
 }
 
 // =====================================================
@@ -176,7 +180,6 @@ static int tabla_leer_a_vectores(int L, double *mant, double *rev){
             idx++;
         } while (gtk_tree_model_iter_next(m, &it) && idx<=L);
     }
-    // Validar: ¿hay al menos una celda no-cero?
     int any = 0;
     for (int k=1;k<=L;k++){
         if (mant[k]!=0.0 || rev[k]!=0.0){ any=1; break; }
@@ -230,34 +233,38 @@ ReemplazoData *cargar_problema(const char *fname) {
 static void construir_series_edad(const ReemplazoData *p, double *mant, double *rev) {
     int L = p->vida_util;
 
-    // 1) Intentar leer DIRECTO de la tabla si existe
     for (int k=1;k<=L;k++){ mant[k]=0; rev[k]=0; }
     int ok = tabla_leer_a_vectores(L, mant, rev);
 
-    // 2) Si la tabla no tenía datos, usar lo que venga en p->periodos
+    // Si la tabla no tenía datos, usar lo que venga en p->periodos; si tampoco, quedan 0
     if (!ok) {
         for (int k=1; k<=L; ++k) {
             int idx = k-1;
             if (idx < p->plazo) {
                 mant[k] = p->periodos[idx].mantenimiento;
                 rev[k]  = p->periodos[idx].reventa;
-            } else if (k>1) {
-                mant[k] = mant[k-1];
-                rev[k]  = rev[k-1];
             }
         }
     }
-    // Sanitizar
     for (int k=1; k<=L; ++k) {
         if (isnan(mant[k])) mant[k]=0;
         if (isnan(rev[k]))  rev[k]=0;
     }
 }
 
-// Llena C[t][x]
+// Llena C[t][x] con opciones de ganancia e inflación (opcionales)
 static void construir_C(const ReemplazoData *p, double C[MAX_T+2][MAX_T+2]) {
     int T = p->plazo;
     int L = p->vida_util;
+
+    // Opciones leídas de UI
+    const int usarG = safe_check_active(checkGanancia);
+    const double gan = usarG ? safe_spin_value(spinGanancia, 0.0) : 0.0;
+
+    const int usarI = safe_check_active(checkInflacion);
+    const double i_pct = safe_spin_value(spinInflacion, 0.0); // en %
+    const double i = usarI ? (i_pct/100.0) : 0.0;
+
     double mant[MAX_L+2]={0}, rev[MAX_L+2]={0};
     construir_series_edad(p, mant, rev);
 
@@ -269,10 +276,22 @@ static void construir_C(const ReemplazoData *p, double C[MAX_T+2][MAX_T+2]) {
         int x_max = mini(t+L, T);
         for (int x=t+1; x<=x_max; ++x) {
             int edad = x - t;
-            double sumMant = 0.0;
-            for (int k=1;k<=edad;k++)
-                sumMant += mant[k];
-            double costo = p->costo_inicial + sumMant - rev[edad];
+
+            // Compra al inicio del intervalo (t); dejamos nominal constante.
+            double compra = p->costo_inicial;
+
+            // Suma de mantenimiento menos ganancia, con inflación si se activa
+            double sum_per = 0.0;
+            for (int k=1;k<=edad;k++){
+                double factor = usarI ? pow(1.0+i, (double)(k-1)) : 1.0;
+                double flujo = mant[k] - (usarG ? gan : 0.0);
+                sum_per += flujo * factor;
+            }
+
+            // Reventa al final del intervalo (edad), inflada si aplica
+            double rev_fin = rev[edad] * (usarI ? pow(1.0+i, (double)(edad-1)) : 1.0);
+
+            double costo = compra + sum_per - rev_fin;
             C[t][x] = costo;
         }
     }
@@ -383,9 +402,21 @@ static void escribir_portada(FILE *f) {
 }
 
 static void escribir_problema(FILE *f, const ReemplazoData *p) {
+    const int usarG = safe_check_active(checkGanancia);
+    const double gan = safe_spin_value(spinGanancia, 0.0);
+    const int usarI = safe_check_active(checkInflacion);
+    const double i_pct = safe_spin_value(spinInflacion, 0.0);
+
     fprintf(f, "\\section*{Datos del Problema}\n");
     fprintf(f, "Costo inicial: $%.2f$, Horizonte $T=%d$, Vida \\'util $L=%d$.\\\\\n",
             p->costo_inicial, p->plazo, p->vida_util);
+
+    if (usarG) fprintf(f, "\\textbf{Con ganancia por uso:} $%.2f$ por per\\'iodo.\\\\\n", gan);
+    else       fprintf(f, "\\textbf{Sin ganancia por uso}.\\\\\n");
+
+    if (usarI) fprintf(f, "\\textbf{Con inflaci\\'on:} $i=%.2f\\%%$ por per\\'iodo.\\\\\n", i_pct);
+    else       fprintf(f, "\\textbf{Sin inflaci\\'on}.\\\\\n");
+
     fprintf(f, "\\subsection*{Mantenimiento y Reventa por Edad}\n");
     fprintf(f, "\\begin{tabular}{c|c|c}\\toprule\nEdad & Mant. & Reventa\\\\\\midrule\n");
     double mant[MAX_L+2]={0}, rev[MAX_L+2]={0};
@@ -394,7 +425,10 @@ static void escribir_problema(FILE *f, const ReemplazoData *p) {
         fprintf(f, "%d & %.2f & %.2f \\\\\n", k, mant[k], rev[k]);
     }
     fprintf(f, "\\bottomrule\\end{tabular}\n");
-    fprintf(f, "Se usa $C_{t,x}=\\text{Compra}+\\sum_{k=1}^{x-t}\\text{Mant}(k)-\\text{Reventa}(x-t)$.\n");
+
+    fprintf(f, "Se usa $C_{t,x}=\\text{Compra}+\\sum_{k=1}^{x-t}(\\text{Mant}(k)");
+    if (usarG) fprintf(f, "-\\text{Gan}");
+    fprintf(f, ")\\cdot(1+i)^{k-1}-\\text{Reventa}(x-t)\\cdot(1+i)^{x-t-1}$ si hay inflaci\\'on.\\\\\n");
 }
 
 static void escribir_ctx(FILE *f, const ReemplazoData *p, const SolveOut *S) {
@@ -496,29 +530,7 @@ static void compilar_y_abrir_pdf(const char *tex) {
 // ==============================
 // --------- Lectura UI ---------
 // ==============================
-static double g_deprec = 100.0;    // por si la tabla no se usa
-static double g_mant_base = 0.0;
-static double g_mant_inc  = 0.0;
-
-static void rellenar_demo(ReemplazoData *p){
-    // Fallback lineal si la tabla no tiene datos
-    g_deprec     = safe_spin_value(spinDeprec,    g_deprec);
-    g_mant_base  = safe_spin_value(spinMantBase,  g_mant_base);
-    g_mant_inc   = safe_spin_value(spinMantInc,   g_mant_inc);
-
-    for (int i=0;i<p->plazo;i++){
-        int edad = i+1;
-        p->periodos[i].periodo = edad;
-        double rev = p->costo_inicial - edad * g_deprec;
-        if (rev < 0 || edad > p->vida_util) rev = 0.0;
-        p->periodos[i].reventa = clampd(rev, 0.0, 1e12);
-        double man = g_mant_base + g_mant_inc * (edad - 1);
-        if (edad > p->vida_util) man = 0.0;
-        p->periodos[i].mantenimiento = clampd(man, 0.0, 1e12);
-    }
-}
-
-static ReemplazoData leer_desde_widgets_o_demo(void){
+static ReemplazoData leer_desde_widgets(void){
     ReemplazoData p;
     memset(&p, 0, sizeof(p));
     p.costo_inicial = atof(safe_entry_text(entryCosto));
@@ -531,23 +543,20 @@ static ReemplazoData leer_desde_widgets_o_demo(void){
 
     p.periodos = (Periodo*)xmalloc(sizeof(Periodo)*p.plazo);
 
-    // Intentar leer de la tabla; si no hay valores, usar demo lineal
+    // Leer directamente de la tabla; si está vacía, quedan 0
     double mant[MAX_L+2]={0}, rev[MAX_L+2]={0};
-    int ok = tabla_leer_a_vectores(p.vida_util, mant, rev);
-    if (ok){
-        for (int i=0;i<p.plazo;i++){
-            int edad = i+1;
-            p.periodos[i].periodo = edad;
-            if (edad<=p.vida_util){
-                p.periodos[i].mantenimiento = mant[edad];
-                p.periodos[i].reventa = rev[edad];
-            }else{
-                p.periodos[i].mantenimiento = 0.0;
-                p.periodos[i].reventa = 0.0;
-            }
+    tabla_leer_a_vectores(p.vida_util, mant, rev);
+
+    for (int i=0;i<p.plazo;i++){
+        int edad = i+1;
+        p.periodos[i].periodo = edad;
+        if (edad<=p.vida_util){
+            p.periodos[i].mantenimiento = clampd(mant[edad], 0.0, 1e12);
+            p.periodos[i].reventa = clampd(rev[edad], 0.0, 1e12);
+        }else{
+            p.periodos[i].mantenimiento = 0.0;
+            p.periodos[i].reventa = 0.0;
         }
-    }else{
-        rellenar_demo(&p);
     }
     return p;
 }
@@ -562,7 +571,7 @@ static void on_spinVida_changed(GtkSpinButton *s, gpointer u){
 }
 
 G_MODULE_EXPORT void on_btnGuardar_clicked(GtkButton *b, gpointer u) {
-    ReemplazoData p = leer_desde_widgets_o_demo();
+    ReemplazoData p = leer_desde_widgets();
     guardar_problema("problema.rep", &p);
     free(p.periodos);
     gtk_widget_set_sensitive(GTK_WIDGET(b), TRUE);
@@ -603,7 +612,7 @@ G_MODULE_EXPORT void on_btnCargar_clicked(GtkButton *b, gpointer u) {
 G_MODULE_EXPORT void on_btnEjecutar_clicked(GtkButton *b, gpointer u) {
     ReemplazoData *p = cargar_problema("problema.rep");
     if (!p) {
-        ReemplazoData tmp = leer_desde_widgets_o_demo();
+        ReemplazoData tmp = leer_desde_widgets();
         p = (ReemplazoData*)xmalloc(sizeof(ReemplazoData));
         *p = tmp; // shallow copy; tmp.periodos queda en p
     }
@@ -669,17 +678,52 @@ int main(int argc, char *argv[]) {
     entryCosto = GETW("entryCosto");             ENSURE(entryCosto, "entryCosto");
     spinPlazo  = GETW("spinPlazo");              ENSURE(spinPlazo,  "spinPlazo");
     spinVida   = GETW("spinVida");               ENSURE(spinVida,   "spinVida");
-    tabla      = GETW("tabla");                  /* TreeView que convertimos en editable */
+    tabla      = GETW("tabla");                  /* TreeView editable */
 
     btnGuardar = GETW("btnGuardar");             ENSURE(btnGuardar, "btnGuardar");
     btnCargar  = GETW("btnCargar");              ENSURE(btnCargar,  "btnCargar");
     btnEjecutar= GETW("btnEjecutar");            ENSURE(btnEjecutar,"btnEjecutar");
     btnSalir   = GETW("btnSalir");               ENSURE(btnSalir,   "btnSalir");
 
-    // Extras (si están en tu glade)
-    spinDeprec    = GETW("spinDeprec");
-    spinMantBase  = GETW("spinMantBase");
-    spinMantInc   = GETW("spinMantInc");
+    // ----- Opciones opcionales -----
+    GtkWidget *grid = GETW("grid_inputs");
+    checkGanancia = GETW("checkGanancia");
+    spinGanancia  = GETW("spinGanancia");
+    checkInflacion= GETW("checkInflacion");
+    spinInflacion = GETW("spinInflacion");
+
+    if (grid && GTK_IS_GRID(grid)) {
+        int next_row = 3; // después de Costo/Plazo/Vida
+
+        if (!checkGanancia) {
+            checkGanancia = gtk_check_button_new_with_label("Usar ganancia por uso");
+            gtk_grid_attach(GTK_GRID(grid), checkGanancia, 0, next_row, 2, 1);
+            next_row++;
+        }
+        if (!spinGanancia) {
+            GtkAdjustment *adj = GTK_ADJUSTMENT(gtk_adjustment_new(0.0, 0.0, 1e12, 10.0, 100.0, 0.0));
+            GtkWidget *lbl = gtk_label_new("Ganancia por período:");
+            spinGanancia = gtk_spin_button_new(adj, 1.0, 2);
+            gtk_grid_attach(GTK_GRID(grid), lbl,          0, next_row, 1, 1);
+            gtk_grid_attach(GTK_GRID(grid), spinGanancia, 1, next_row, 1, 1);
+            next_row++;
+        }
+        if (!checkInflacion) {
+            checkInflacion = gtk_check_button_new_with_label("Usar inflación");
+            gtk_grid_attach(GTK_GRID(grid), checkInflacion, 0, next_row, 2, 1);
+            next_row++;
+        }
+        if (!spinInflacion) {
+            GtkAdjustment *adj = GTK_ADJUSTMENT(gtk_adjustment_new(0.0, -100.0, 1000.0, 0.1, 1.0, 0.0));
+            GtkWidget *lbl = gtk_label_new("Inflación (%% por período):");
+            spinInflacion = gtk_spin_button_new(adj, 0.1, 2);
+            gtk_grid_attach(GTK_GRID(grid), lbl,           0, next_row, 1, 1);
+            gtk_grid_attach(GTK_GRID(grid), spinInflacion, 1, next_row, 1, 1);
+            next_row++;
+        }
+    } else {
+        g_printerr("ADVERTENCIA: No se encontró 'grid_inputs'; no se pudieron insertar campos extra.\n");
+    }
 
     // Inicializar tabla y enganchar resize al cambio de L
     tabla_init_if_needed();
@@ -698,3 +742,4 @@ int main(int argc, char *argv[]) {
     gtk_main();
     return 0;
 }
+
