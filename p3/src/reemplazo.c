@@ -466,10 +466,10 @@ int main(int argc, char *argv[]) {
 
     // 1) Resolver ruta del .glade probando varias opciones relativas
     const char *candidates[] = {
-        "p3/ui/reemplazo.glade",   // si corres desde raíz del repo
-        "../ui/reemplazo.glade",   // si corres desde p3/src  <-- TU CASO
-        "ui/reemplazo.glade",      // por si mueves el binario a p3/
-        "reemplazo.glade"          // por si lo dejas junto al binario
+        "p3/ui/nuevo.glade",   // si corres desde raíz del repo
+        "../ui/nuevo.glade",   // si corres desde p3/src  <-- TU CASO
+        "ui/nuevo.glade",      // por si mueves el binario a p3/
+        "nuevo.glade"          // por si lo dejas junto al binario
     };
     const int npaths = (int)(sizeof(candidates)/sizeof(candidates[0]));
     const char *glade_path = NULL;
@@ -509,7 +509,13 @@ int main(int argc, char *argv[]) {
     btnEjecutar= GTK_WIDGET(gtk_builder_get_object(builder, "btnEjecutar"));
     btnSalir   = GTK_WIDGET(gtk_builder_get_object(builder, "btnSalir"));
 
-    gtk_builder_connect_signals(builder, NULL);
+    // gtk_builder_connect_signals(builder, NULL);
+
+    g_signal_connect(btnGuardar, "clicked", G_CALLBACK(on_btnGuardar_clicked), NULL); 
+    g_signal_connect(btnCargar, "clicked", G_CALLBACK(on_btnCargar_clicked), NULL); 
+    g_signal_connect(btnEjecutar, "clicked", G_CALLBACK(on_btnEjecutar_clicked), NULL); 
+    g_signal_connect(btnSalir, "clicked", G_CALLBACK(on_btnSalir_clicked), NULL); 
+
     g_object_unref(builder);
 
     gtk_widget_show_all(win);
