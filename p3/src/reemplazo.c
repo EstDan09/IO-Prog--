@@ -9,7 +9,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
+#include <stdbool.h>
+#include <time.h>
+#include <errno.h>
+#include <limits.h>
 // ==============================
 // --------- Estructuras --------
 // ==============================
@@ -440,7 +443,21 @@ static void escribir_rutas(FILE *f, const ReemplazoData *p, const SolveOut *S) {
 }
 
 static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const char *fname) {
-    FILE *f = fopen(fname, "w");
+    time_t t=time(NULL); 
+    struct tm tm=*localtime(&t);
+
+    // 1) Crear carpeta con timestamp
+    char dir[256]; 
+    g_snprintf(dir,sizeof(dir),"reports/replace-%04d%02d%02d-%02d%02d%02d",
+               tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    g_mkdir_with_parents(dir, 0755);
+
+    // 2) Rutas de archivos
+    char tex[512]; g_snprintf(tex,sizeof(tex), "%s/replace.tex", dir);
+    char pdf[512]; g_snprintf(pdf,sizeof(pdf), "%s/replace.pdf", dir);
+
+    // 3) Escribir el archivo .tex
+    FILE *f = fopen(tex, "w");
     if (!f) return -1;
     fprintf(f,
         "\\documentclass[11pt]{article}\n"
@@ -460,8 +477,23 @@ static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const 
     escribir_rutas(f, p, S);
     fprintf(f, "\\end{document}\n");
     fclose(f);
+
+    // 4) Compilar y abrir con evince en modo presentación (-s)
+    char cmd[1024];
+    g_snprintf(cmd,sizeof(cmd),
+               "cd '%s' && pdflatex -interaction=nonstopmode replace.tex >/dev/null 2>&1 "
+               "&& (setsid evince -s 'replace.pdf' >/dev/null 2>&1 &)",
+               dir);
+
+    int r = system(cmd);
+    if (r == -1) {
+        g_printerr("Fallo al invocar pdflatex/evince\n");
+        return -1;
+    }
+
     return 0;
 }
+
 
 // Sin warnings: usa g_spawn en lugar de system()
 static void compilar_y_abrir_pdf(const char *tex) {
@@ -521,7 +553,7 @@ static void rellenar_demo(ReemplazoData *p){
 static ReemplazoData leer_desde_widgets_o_demo(void){
     ReemplazoData p;
     memset(&p, 0, sizeof(p));
-    p.costo_inicial = atof(safe_entry_text(entryCosto));
+    p.costo_inicial = gtk_spin_button_get_value(GTK_SPIN_BUTTON(entryCosto));
     p.plazo = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinPlazo));
     p.vida_util = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinVida));
 
@@ -530,28 +562,9 @@ static ReemplazoData leer_desde_widgets_o_demo(void){
     if (p.vida_util > p.plazo) p.vida_util = p.plazo;
 
     p.periodos = (Periodo*)xmalloc(sizeof(Periodo)*p.plazo);
-
-    // Intentar leer de la tabla; si no hay valores, usar demo lineal
-    double mant[MAX_L+2]={0}, rev[MAX_L+2]={0};
-    int ok = tabla_leer_a_vectores(p.vida_util, mant, rev);
-    if (ok){
-        for (int i=0;i<p.plazo;i++){
-            int edad = i+1;
-            p.periodos[i].periodo = edad;
-            if (edad<=p.vida_util){
-                p.periodos[i].mantenimiento = mant[edad];
-                p.periodos[i].reventa = rev[edad];
-            }else{
-                p.periodos[i].mantenimiento = 0.0;
-                p.periodos[i].reventa = 0.0;
-            }
-        }
-    }else{
-        rellenar_demo(&p);
-    }
+    rellenar_demo(&p);
     return p;
 }
-
 // ==============================
 // ----------- Callbacks --------
 // ==============================
@@ -561,66 +574,90 @@ static void on_spinVida_changed(GtkSpinButton *s, gpointer u){
     tabla_resize_rows(L);
 }
 
-G_MODULE_EXPORT void on_btnGuardar_clicked(GtkButton *b, gpointer u) {
-    ReemplazoData p = leer_desde_widgets_o_demo();
-    guardar_problema("problema.rep", &p);
-    free(p.periodos);
-    gtk_widget_set_sensitive(GTK_WIDGET(b), TRUE);
-}
+static void on_btnGuardar_clicked(GtkButton *b, gpointer u) {
+    GtkWidget *dialog = gtk_file_chooser_dialog_new("Guardar problema",
+        GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(b))),
+        GTK_FILE_CHOOSER_ACTION_SAVE,
+        "_Cancelar", GTK_RESPONSE_CANCEL,
+        "_Guardar", GTK_RESPONSE_ACCEPT,
+        NULL);
 
-G_MODULE_EXPORT void on_btnCargar_clicked(GtkButton *b, gpointer u) {
-    ReemplazoData *p = cargar_problema("problema.rep");
-    if (p) {
-        char buf[64];
-        snprintf(buf,sizeof(buf),"%.2f", p->costo_inicial);
-        gtk_entry_set_text(GTK_ENTRY(entryCosto), buf);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinPlazo), p->plazo);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinVida), p->vida_util);
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "problema.rep");
 
-        // Reflejar en la tabla
-        tabla_init_if_needed();
-        tabla_resize_rows(p->vida_util);
-        GtkListStore *store = tabla_get_store();
-        if (store){
-            for (int i=0;i<p->vida_util;i++){
-                GtkTreeIter it;
-                if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &it, NULL, i)){
-                    gtk_list_store_set(store, &it,
-                        COL_MANT, p->periodos[i].mantenimiento,
-                        COL_REVENTA, p->periodos[i].reventa, -1);
-                }
-            }
-        }
-
-        g_print("Cargado: Costo=%.2f, Plazo=%d, Vida=%d\n", p->costo_inicial, p->plazo, p->vida_util);
-        free(p->periodos);
-        free(p);
-    } else {
-        g_printerr("No se pudo cargar problema.rep\n");
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        ReemplazoData p = leer_desde_widgets_o_demo();
+        guardar_problema(filename, &p);
+        free(p.periodos);
+        g_free(filename);
     }
+
+    gtk_widget_destroy(dialog);
 }
 
-G_MODULE_EXPORT void on_btnEjecutar_clicked(GtkButton *b, gpointer u) {
+static void on_btnCargar_clicked(GtkButton *b, gpointer u) {
+    GtkWidget *dialog = gtk_file_chooser_dialog_new("Cargar problema",
+        GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(b))),
+        GTK_FILE_CHOOSER_ACTION_OPEN,
+        "_Cancelar", GTK_RESPONSE_CANCEL,
+        "_Abrir", GTK_RESPONSE_ACCEPT,
+        NULL);
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        ReemplazoData *p = cargar_problema(filename);
+        if (p) {
+            char buf[64];
+            snprintf(buf,sizeof(buf),"%.2f", p->costo_inicial);
+            gtk_entry_set_text(GTK_ENTRY(entryCosto), buf);
+            gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinPlazo), p->plazo);
+            gtk_spin_button_set_value(GTK_SPIN_BUTTON(spinVida), p->vida_util);
+            free(p->periodos);
+            free(p);
+        } else {
+            GtkWidget *msg = gtk_message_dialog_new(
+                GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(b))),
+                GTK_DIALOG_MODAL,
+                GTK_MESSAGE_ERROR,
+                GTK_BUTTONS_OK,
+                "No se pudo cargar el archivo."
+            );
+            gtk_dialog_run(GTK_DIALOG(msg));
+            gtk_widget_destroy(msg);
+        }
+        g_free(filename);
+    }
+
+    gtk_widget_destroy(dialog);
+}
+
+void on_btnEjecutar_clicked(GtkButton *b, gpointer u) {
     ReemplazoData *p = cargar_problema("problema.rep");
     if (!p) {
         ReemplazoData tmp = leer_desde_widgets_o_demo();
         p = (ReemplazoData*)xmalloc(sizeof(ReemplazoData));
-        *p = tmp; // shallow copy; tmp.periodos queda en p
+        p->costo_inicial = tmp.costo_inicial;
+        p->plazo        = tmp.plazo;
+        p->vida_util    = tmp.vida_util;
+        p->periodos     = (Periodo*)xmalloc(sizeof(Periodo) * tmp.plazo);
+        memcpy(p->periodos, tmp.periodos, sizeof(Periodo) * tmp.plazo);
+        free(tmp.periodos);  // liberamos el arreglo de la copia temporal
     }
+
     SolveOut S;
     memset(&S, 0, sizeof(S));
     solve_caso(p, &S);
 
-    if (generar_reporte_tex(p, &S, "reporte.tex") == 0) {
-        compilar_y_abrir_pdf("reporte.tex");
-    } else {
-        g_printerr("No se pudo crear reporte.tex\n");
+    if (generar_reporte_tex(p, &S, "reporte.tex") != 0) {
+        g_printerr("No se pudo generar el reporte\n");
     }
 
     pathset_free(&S.paths);
     free(p->periodos);
     free(p);
 }
+
+
 
 G_MODULE_EXPORT void on_btnSalir_clicked(GtkButton *b, gpointer u) {
     gtk_main_quit();

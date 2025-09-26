@@ -1,0 +1,94 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large Instituto Tecnol\'ogico de Costa Rica\\Escuela de Computaci\'on}\vspace{1cm}
+{\huge Proyecto: Reemplazo de Equipos}\vspace{1cm}
+{\large II Semestre 2025}\vspace{2cm}
+{\large Estudiante(s):}\\Esteban Secaida (y equipo)\vfill
+{\large Fecha: \today}
+\end{titlepage}
+\section*{Datos del Problema}
+Costo inicial: $100.00$, Horizonte $T=10$, Vida \'util $L=5$.\\
+\subsection*{Mantenimiento y Reventa por Edad}
+\begin{tabular}{c|c|c}\toprule
+Edad & Mant. & Reventa\\\midrule
+1 & 300.00 & 150.00 \\
+2 & 400.00 & 200.00 \\
+3 & 600.00 & 300.00 \\
+4 & 0.00 & 0.00 \\
+5 & 0.00 & 0.00 \\
+\bottomrule\end{tabular}
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}\text{Mant}(k)-\text{Reventa}(x-t)$.
+\section*{Tabla de $C_{t,x}$}
+Entradas v\'alidas con $t<x\le\min(t+L,T)$.
+
+\begin{tabular}{c|c|c}\toprule
+ t & x & $C_{t,x}$ \\\midrule
+0 & 1 & 250.00 \\
+0 & 2 & 600.00 \\
+0 & 3 & 1100.00 \\
+0 & 4 & 1400.00 \\
+0 & 5 & 1400.00 \\
+1 & 2 & 250.00 \\
+1 & 3 & 600.00 \\
+1 & 4 & 1100.00 \\
+1 & 5 & 1400.00 \\
+1 & 6 & 1400.00 \\
+2 & 3 & 250.00 \\
+2 & 4 & 600.00 \\
+2 & 5 & 1100.00 \\
+2 & 6 & 1400.00 \\
+2 & 7 & 1400.00 \\
+3 & 4 & 250.00 \\
+3 & 5 & 600.00 \\
+3 & 6 & 1100.00 \\
+3 & 7 & 1400.00 \\
+3 & 8 & 1400.00 \\
+4 & 5 & 250.00 \\
+4 & 6 & 600.00 \\
+4 & 7 & 1100.00 \\
+4 & 8 & 1400.00 \\
+4 & 9 & 1400.00 \\
+5 & 6 & 250.00 \\
+5 & 7 & 600.00 \\
+5 & 8 & 1100.00 \\
+5 & 9 & 1400.00 \\
+5 & 10 & 1400.00 \\
+6 & 7 & 250.00 \\
+6 & 8 & 600.00 \\
+6 & 9 & 1100.00 \\
+6 & 10 & 1400.00 \\
+7 & 8 & 250.00 \\
+7 & 9 & 600.00 \\
+7 & 10 & 1100.00 \\
+8 & 9 & 250.00 \\
+8 & 10 & 600.00 \\
+9 & 10 & 250.00 \\
+\bottomrule\end{tabular}
+\section*{Programaci\'on Din\'amica: $G(t)$ y Siguientes}
+\begin{tabular}{c|c|l}\toprule
+ t & $G(t)$ & Siguientes \\\midrule
+0 & 2500.00 & 1 \\
+1 & 2250.00 & 2 \\
+2 & 2000.00 & 3 \\
+3 & 1750.00 & 4 \\
+4 & 1500.00 & 5 \\
+5 & 1250.00 & 6 \\
+6 & 1000.00 & 7 \\
+7 & 750.00 & 8 \\
+8 & 500.00 & 9 \\
+9 & 250.00 & 10 \\
+10 & 0.00 &  \\
+\bottomrule\end{tabular}
+\section*{Todos los planes \`optimos}
+Costo m\'inimo total: $G(0)=\mathbf{2500.00}$.\\
+\noindent Ruta 1: \texttt{0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10}\\
+\end{document}
