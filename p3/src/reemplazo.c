@@ -82,9 +82,9 @@ static void* xmalloc(size_t n){
     return p;
 }
 
-static const char* safe_entry_text(GtkWidget *e){
-    return (e && GTK_IS_ENTRY(e)) ? gtk_entry_get_text(GTK_ENTRY(e)) : "0";
-}
+// static const char* safe_entry_text(GtkWidget *e){
+//     return (e && GTK_IS_ENTRY(e)) ? gtk_entry_get_text(GTK_ENTRY(e)) : "0";
+// }
 
 static double safe_spin_value(GtkWidget *w, double def){
     if (w && GTK_IS_SPIN_BUTTON(w)) return gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
@@ -103,6 +103,7 @@ static GtkListStore* tabla_get_store(void){
 }
 
 static void cell_edited_double(GtkCellRendererText *r, gchar *path, gchar *new_text, gpointer col_ptr){
+    (void)r;
     int col = GPOINTER_TO_INT(col_ptr);
     GtkListStore *store = tabla_get_store();
     if (!store) return;
@@ -428,6 +429,7 @@ static void escribir_tabla_G(FILE *f, const ReemplazoData *p, const SolveOut *S)
 }
 
 static void escribir_rutas(FILE *f, const ReemplazoData *p, const SolveOut *S) {
+    (void)p;
     fprintf(f, "\\section*{Todos los planes \\`optimos}\n");
     fprintf(f, "Costo m\\'inimo total: $G(0)=\\mathbf{%.2f}$.\\\\\n", S->R.G[0]);
     int mostrar = S->paths.num_paths;
@@ -443,6 +445,7 @@ static void escribir_rutas(FILE *f, const ReemplazoData *p, const SolveOut *S) {
 }
 
 static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const char *fname) {
+    (void)fname;
     time_t t=time(NULL); 
     struct tm tm=*localtime(&t);
 
@@ -496,34 +499,34 @@ static int generar_reporte_tex(const ReemplazoData *p, const SolveOut *S, const 
 
 
 // Sin warnings: usa g_spawn en lugar de system()
-static void compilar_y_abrir_pdf(const char *tex) {
-    GError *err = NULL;
-    gchar *cmd1 = g_strdup_printf("pdflatex -interaction=nonstopmode -halt-on-error %s", tex);
+// static void compilar_y_abrir_pdf(const char *tex) {
+//     GError *err = NULL;
+//     gchar *cmd1 = g_strdup_printf("pdflatex -interaction=nonstopmode -halt-on-error %s", tex);
 
-    if (!g_spawn_command_line_sync(cmd1, NULL, NULL, NULL, &err)) {
-        g_printerr("pdflatex error: %s\n", err->message); g_clear_error(&err);
-    }
-    if (!g_spawn_command_line_sync(cmd1, NULL, NULL, NULL, &err)) {
-        g_printerr("pdflatex error: %s\n", err->message); g_clear_error(&err);
-    }
-    g_free(cmd1);
+//     if (!g_spawn_command_line_sync(cmd1, NULL, NULL, NULL, &err)) {
+//         g_printerr("pdflatex error: %s\n", err->message); g_clear_error(&err);
+//     }
+//     if (!g_spawn_command_line_sync(cmd1, NULL, NULL, NULL, &err)) {
+//         g_printerr("pdflatex error: %s\n", err->message); g_clear_error(&err);
+//     }
+//     g_free(cmd1);
 
-    gchar *pdf = g_strdup(tex);
-    gchar *dot = strrchr(pdf, '.');
-    if (dot) strcpy(dot, ".pdf");
+//     gchar *pdf = g_strdup(tex);
+//     gchar *dot = strrchr(pdf, '.');
+//     if (dot) strcpy(dot, ".pdf");
 
-    if (g_file_test(pdf, G_FILE_TEST_IS_REGULAR)) {
-        gchar *cmd2 = g_strdup_printf("xdg-open \"%s\"", pdf);
-        if (!g_spawn_command_line_async(cmd2, &err)) {
-            g_printerr("No pude abrir el PDF: %s\n", err->message); g_clear_error(&err);
-        }
-        g_free(cmd2);
-    } else {
-        g_printerr("No se generó el PDF (%s). Revisa el log de LaTeX (reporte.log).\n", pdf);
-    }
+//     if (g_file_test(pdf, G_FILE_TEST_IS_REGULAR)) {
+//         gchar *cmd2 = g_strdup_printf("xdg-open \"%s\"", pdf);
+//         if (!g_spawn_command_line_async(cmd2, &err)) {
+//             g_printerr("No pude abrir el PDF: %s\n", err->message); g_clear_error(&err);
+//         }
+//         g_free(cmd2);
+//     } else {
+//         g_printerr("No se generó el PDF (%s). Revisa el log de LaTeX (reporte.log).\n", pdf);
+//     }
 
-    g_free(pdf);
-}
+//     g_free(pdf);
+// }
 
 // ==============================
 // --------- Lectura UI ---------
@@ -569,12 +572,14 @@ static ReemplazoData leer_desde_widgets_o_demo(void){
 // ----------- Callbacks --------
 // ==============================
 static void on_spinVida_changed(GtkSpinButton *s, gpointer u){
+    (void)u;
     int L = gtk_spin_button_get_value_as_int(s);
     tabla_init_if_needed();
     tabla_resize_rows(L);
 }
 
 static void on_btnGuardar_clicked(GtkButton *b, gpointer u) {
+    (void)u;
     GtkWidget *dialog = gtk_file_chooser_dialog_new("Guardar problema",
         GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(b))),
         GTK_FILE_CHOOSER_ACTION_SAVE,
@@ -595,7 +600,7 @@ static void on_btnGuardar_clicked(GtkButton *b, gpointer u) {
     gtk_widget_destroy(dialog);
 }
 
-static void on_btnCargar_clicked(GtkButton *b, gpointer u) {
+static void on_btnCargar_clicked(GtkButton *b) {
     GtkWidget *dialog = gtk_file_chooser_dialog_new("Cargar problema",
         GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(b))),
         GTK_FILE_CHOOSER_ACTION_OPEN,
@@ -632,6 +637,7 @@ static void on_btnCargar_clicked(GtkButton *b, gpointer u) {
 }
 
 void on_btnEjecutar_clicked(GtkButton *b, gpointer u) {
+    (void)u; (void)b;
     ReemplazoData *p = cargar_problema("problema.rep");
     if (!p) {
         ReemplazoData tmp = leer_desde_widgets_o_demo();
@@ -660,6 +666,7 @@ void on_btnEjecutar_clicked(GtkButton *b, gpointer u) {
 
 
 G_MODULE_EXPORT void on_btnSalir_clicked(GtkButton *b, gpointer u) {
+    (void)b; (void)u;
     gtk_main_quit();
 }
 

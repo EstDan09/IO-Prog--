@@ -153,6 +153,18 @@ static void launch_knapsack(GtkButton *button, gpointer user_data)
     if (ret == -1) g_printerr("Error lanzando p2: %s\n", g_strerror(errno));
 }
 
+static void launch_replace(GtkButton *button, gpointer user_data)
+{
+    (void)button; (void)user_data;
+    const char *bin   = "./bin/p3";
+    const char *glade = "p2/ui/nuevo.glade";
+    char cmd[512];
+    g_snprintf(cmd, sizeof(cmd),
+               "setsid '%s' '%s' </dev/null >/dev/null 2>&1 &",
+               bin, glade);
+    int ret = system(cmd);
+    if (ret == -1) g_printerr("Error lanzando p3: %s\n", g_strerror(errno));
+}
 
 /* ===== Botón Salir ===== */
 static void on_quit_clicked(GtkButton *button, gpointer user_data)
@@ -228,7 +240,8 @@ int main(int argc, char *argv[])
                                 "Muestra D(0) y resultado final; integra guardado/carga y puede generar reporte PDF.");
     gtk_widget_set_tooltip_text(b2, "Problema de la mochila: problema clásico de optimización.\n"
                                     "Selecciona de un grupo de elementos con un peso y valor definidos por el usuario para maximizar la ganancia, sin exceder la capacidad de la mochila");
-    gtk_widget_set_tooltip_text(b3, "Ejecuta Algoritmo 3 (pending)");
+    gtk_widget_set_tooltip_text(b3, "Reemplazo de equipos: programación dinámica. \n"
+                                    "Dado el costo inicial, la vida útil y los costos de mantenimiento y valor de reventa de un activo, el programa calcula el plan óptimo de reemplazo durante un horizonte de tiempo. Usa programación dinámica para minimizar el costo total.");
     gtk_widget_set_tooltip_text(b4, "Ejecuta Algoritmo 4 (pending)");
     gtk_widget_set_tooltip_text(bout, "Salir del menú");
 
@@ -236,7 +249,7 @@ int main(int argc, char *argv[])
     g_signal_connect(win, "destroy", G_CALLBACK(on_destroy), NULL);
     g_signal_connect(b1, "clicked", G_CALLBACK(launch_floyd), NULL); /* Floyd con system() */
     g_signal_connect(b2, "clicked", G_CALLBACK(launch_knapsack), NULL);
-    g_signal_connect(b3, "clicked", G_CALLBACK(launch_pending), NULL);
+    g_signal_connect(b3, "clicked", G_CALLBACK(launch_replace), NULL);
     g_signal_connect(b4, "clicked", G_CALLBACK(launch_pending), NULL);
     g_signal_connect(bout, "clicked", G_CALLBACK(on_quit_clicked), win);
 
