@@ -1,0 +1,96 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large Instituto Tecnol\'ogico de Costa Rica\\Escuela de Computaci\'on}\vspace{1cm}
+{\huge Proyecto: Reemplazo de Equipos}\vspace{1cm}
+{\large II Semestre 2025}\vspace{2cm}
+{\large Estudiante(s):}\\Esteban Secaida (y equipo)\vfill
+{\large Fecha: \today}
+\end{titlepage}
+\section*{Datos del Problema}
+Costo inicial: $100.00$, Horizonte $T=10$, Vida \'util $L=5$.\\
+\textbf{Sin ganancia por uso}.\\
+\textbf{Sin inflaci\'on}.\\
+\subsection*{Mantenimiento y Reventa por Edad}
+\begin{tabular}{c|c|c}\toprule
+Edad & Mant. & Reventa\\\midrule
+1 & 0.00 & 0.00 \\
+2 & 0.00 & 0.00 \\
+3 & 0.00 & 0.00 \\
+4 & 0.00 & 0.00 \\
+5 & 0.00 & 0.00 \\
+\bottomrule\end{tabular}
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}(\text{Mant}(k))\cdot(1+i)^{k-1}-\text{Reventa}(x-t)\cdot(1+i)^{x-t-1}$ si hay inflaci\'on.\\
+\section*{Tabla de $C_{t,x}$}
+Entradas v\'alidas con $t<x\le\min(t+L,T)$.
+
+\begin{tabular}{c|c|c}\toprule
+ t & x & $C_{t,x}$ \\\midrule
+0 & 1 & 100.00 \\
+0 & 2 & 100.00 \\
+0 & 3 & 100.00 \\
+0 & 4 & 100.00 \\
+0 & 5 & 100.00 \\
+1 & 2 & 100.00 \\
+1 & 3 & 100.00 \\
+1 & 4 & 100.00 \\
+1 & 5 & 100.00 \\
+1 & 6 & 100.00 \\
+2 & 3 & 100.00 \\
+2 & 4 & 100.00 \\
+2 & 5 & 100.00 \\
+2 & 6 & 100.00 \\
+2 & 7 & 100.00 \\
+3 & 4 & 100.00 \\
+3 & 5 & 100.00 \\
+3 & 6 & 100.00 \\
+3 & 7 & 100.00 \\
+3 & 8 & 100.00 \\
+4 & 5 & 100.00 \\
+4 & 6 & 100.00 \\
+4 & 7 & 100.00 \\
+4 & 8 & 100.00 \\
+4 & 9 & 100.00 \\
+5 & 6 & 100.00 \\
+5 & 7 & 100.00 \\
+5 & 8 & 100.00 \\
+5 & 9 & 100.00 \\
+5 & 10 & 100.00 \\
+6 & 7 & 100.00 \\
+6 & 8 & 100.00 \\
+6 & 9 & 100.00 \\
+6 & 10 & 100.00 \\
+7 & 8 & 100.00 \\
+7 & 9 & 100.00 \\
+7 & 10 & 100.00 \\
+8 & 9 & 100.00 \\
+8 & 10 & 100.00 \\
+9 & 10 & 100.00 \\
+\bottomrule\end{tabular}
+\section*{Programaci\'on Din\'amica: $G(t)$ y Siguientes}
+\begin{tabular}{c|c|l}\toprule
+ t & $G(t)$ & Siguientes \\\midrule
+0 & 200.00 & 5 \\
+1 & 200.00 & 5, 6 \\
+2 & 200.00 & 5, 6, 7 \\
+3 & 200.00 & 5, 6, 7, 8 \\
+4 & 200.00 & 5, 6, 7, 8, 9 \\
+5 & 100.00 & 10 \\
+6 & 100.00 & 10 \\
+7 & 100.00 & 10 \\
+8 & 100.00 & 10 \\
+9 & 100.00 & 10 \\
+10 & 0.00 &  \\
+\bottomrule\end{tabular}
+\section*{Todos los planes \`optimos}
+Costo m\'inimo total: $G(0)=\mathbf{200.00}$.\\
+\noindent Ruta 1: \texttt{0 -> 5 -> 10}\\
+\end{document}

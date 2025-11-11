@@ -1,0 +1,67 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\tikzset{every node/.style={circle, draw, minimum size=8mm}}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large Instituto Tecnol\'ogico de Costa Rica\\Escuela de Computaci\'on}\vspace{1cm}
+{\huge Proyecto: Reemplazo de Equipos}\vspace{1cm}
+{\large II Semestre 2025}\vspace{2cm}
+{\large Estudiante(s):}\\Esteban Secaida - Fabian Bustos\vfill
+{\large Fecha: \today}
+\end{titlepage}
+\section*{Datos del Problema}
+Costo inicial: $8000,00$, Horizonte $T=3$, Vida \'util $L=3$.\\
+\textbf{Sin ganancia por uso}.\\
+\textbf{Con inflaci\'on:} $i=0,30\%$ por per\'iodo.\\
+\subsection*{Mantenimiento y Reventa por Edad}
+\begin{tabular}{c|c|c}\toprule
+Edad & Mant. & Reventa\\\midrule
+1 & 300,00 & 7500,00 \\
+2 & 425,00 & 6250,00 \\
+3 & 879,00 & 4500,00 \\
+\bottomrule\end{tabular}
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}(\text{Mant}(k))\cdot(1+i)^{k-1}-\text{Reventa}(x-t)\cdot(1+i)^{x-t-1}$ si hay inflaci\'on.\\
+\section*{Tabla de $C_{t,x}$}
+Entradas v\'alidas con $t<x\le\min(t+L,T)$.
+
+\begin{tabular}{c|c|c}\toprule
+ t & x & $C_{t,x}$ \\\midrule
+0 & 1 & 800,00 \\
+0 & 2 & 2457,53 \\
+0 & 3 & 5083,52 \\
+1 & 2 & 800,00 \\
+1 & 3 & 2457,53 \\
+2 & 3 & 800,00 \\
+\bottomrule\end{tabular}
+\section*{Programaci\'on Din\'amica: $G(t)$ y Siguientes}
+\begin{tabular}{c|c|l}\toprule
+ t & $G(t)$ & Siguientes \\\midrule
+0 & 2400,00 & 1 \\
+1 & 1600,00 & 2 \\
+2 & 800,00 & 3 \\
+3 & 0,00 &  \\
+\bottomrule\end{tabular}
+\section*{Todos los planes \`optimos}
+Costo m\'inimo total: $G(0)=\mathbf{2400,00}$.\\
+\noindent Ruta 1: \texttt{0 -> 1 -> 2 -> 3}\\
+\section*{Grafos de Rutas \`Optimas}
+\subsection*{Ruta óptima 1}
+\begin{tikzpicture}[->, >=stealth, node distance=2cm]
+\node (R0Y0) at (0,0) {0};
+\node (R0Y1) at (2,0) {1};
+\node (R0Y2) at (4,0) {2};
+\node (R0Y3) at (6,0) {3};
+\draw[->] (R0Y0) -- (R0Y1);
+\draw[->] (R0Y1) -- (R0Y2);
+\draw[->] (R0Y2) -- (R0Y3);
+\end{tikzpicture}
+\bigskip
+\end{document}

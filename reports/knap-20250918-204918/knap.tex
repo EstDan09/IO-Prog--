@@ -1,0 +1,47 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage[table]{xcolor}
+\usepackage{longtable}
+\title{Proyecto 2: Problema de la Mochila}\date{\today}
+\begin{document}\maketitle
+\section*{Descripción}
+Se resuelve el problema de la mochila en variante \textit{0/1} (capacidad $W=5$) con 4 objetos.\\
+\subsection*{Problema ingresado}
+Maximizar $Z = \sum_{i=1}^{4} v_i x_i$ \quad sujeto a $\sum_{i=1}^{4} w_i x_i \le 5$, $x_i \ge 0$ enteras, $x_i\in \{0,1\}$.
+\\Datos:\\\
+\begin{longtable}{r|lrrr}\# & Nombre & $w_i$ & $v_i$ & $q_i$\\\hline
+1 & item & 0 & 0 & 0 \\
+2 & item & 0 & 0 & 0 \\
+3 & item & 0 & 0 & 0 \\
+4 & item & 0 & 0 & 0 \\
+\end{longtable}
+\subsection*{Tabla de trabajo (DP)}
+\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.1}
+\noindent\begin{tabular}{r|rrrrrr}\hline
+$i\backslash W$ & 0 & 1 & 2 & 3 & 4 & 5 \\\hline
+0 & \textcolor{black}{0} & \textcolor{black}{0} & \textcolor{black}{0} & \textcolor{black}{0} & \textcolor{black}{0} & \textcolor{black}{0} \\
+1 & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} \\
+2 & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} \\
+3 & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} \\
+4 & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} & \textcolor{green!70!black}{0} \\
+\hline\end{tabular}
+\subsection*{Solución óptima}
+Valor óptimo $Z^* = 0$.\\
+Solución 1: \\
+Solución 2: $x_{1}=1$ \\
+Solución 3: $x_{2}=1$ \\
+Solución 4: $x_{1}=1$ $x_{2}=1$ \\
+Solución 5: $x_{3}=1$ \\
+Solución 6: $x_{1}=1$ $x_{3}=1$ \\
+Solución 7: $x_{2}=1$ $x_{3}=1$ \\
+Solución 8: $x_{1}=1$ $x_{2}=1$ $x_{3}=1$ \\
+Solución 9: $x_{4}=1$ \\
+Solución 10: $x_{1}=1$ $x_{4}=1$ \\
+Solución 11: $x_{2}=1$ $x_{4}=1$ \\
+Solución 12: $x_{1}=1$ $x_{2}=1$ $x_{4}=1$ \\
+Solución 13: $x_{3}=1$ $x_{4}=1$ \\
+Solución 14: $x_{1}=1$ $x_{3}=1$ $x_{4}=1$ \\
+Solución 15: $x_{2}=1$ $x_{3}=1$ $x_{4}=1$ \\
+Solución 16: $x_{1}=1$ $x_{2}=1$ $x_{3}=1$ $x_{4}=1$ \\
+\end{document}

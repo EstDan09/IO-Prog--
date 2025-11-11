@@ -3,7 +3,7 @@
 }
 
 .bg-pending{
-    background-color: #d0dad0;
+    background-color: #6e6e6e;
 }
 
 
@@ -42,6 +42,20 @@ button.option:active {
     background-color: #2e7d32;   
     border-color: #1b5e20;
 }
+button.load {
+    background-color: #ffffff;   
+    color: #000000;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #2149b8;
+    transition: all 200ms ease-in-out;
+}
+
+button.load:hover {
+    background-color: #246aff;
+}
 
 #btn_salir {
     background-color: #a93226;   
@@ -70,4 +84,45 @@ button.option:active {
     font-weight: bold;
     font-size: 14px;
 }
+
+#spinbutton {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 2px;
+}
+
+#spinbutton entry {
+    background: #00376e;
+    color: #1b1818;
+    font-weight: bold;
+}
+
+#spinbutton button.up {
+    background: #88c0d0;
+    color: white;
+    border-radius: 0 6px 6px 0; 
+}
+
+#spinbutton button.down {
+    background: #bf616a;
+    color: white;
+}
+
+#spinbutton button:hover {
+    background: #5e81ac;
+}
+
+.dp-skip { color: #228B22; }
+
+.dp-take { color: #B22222; }
+
+.dp-tie  { color: #1E90FF; }
+
+.infinite-check {
+    color: #ffffff;  
+    font-weight: bold;
+    font-size: 16px;
+}
+
+
 

@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large Instituto Tecnol\'ogico de Costa Rica\\Escuela de Computaci\'on}\vspace{1cm}
+{\huge Proyecto: Reemplazo de Equipos}\vspace{1cm}
+{\large II Semestre 2025}\vspace{2cm}
+{\large Estudiante(s):}\\Esteban Secaida (y equipo)\vfill
+{\large Fecha: \today}
+\end{titlepage}
+\section*{Datos del Problema}
+Costo inicial: $8,00$, Horizonte $T=4$, Vida \'util $L=2$.\\
+\textbf{Sin ganancia por uso}.\\
+\textbf{Sin inflaci\'on}.\\
+\subsection*{Mantenimiento y Reventa por Edad}
+\begin{tabular}{c|c|c}\toprule
+Edad & Mant. & Reventa\\\midrule
+1 & 0,00 & 0,00 \\
+2 & 0,00 & 0,00 \\
+\bottomrule\end{tabular}
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}(\text{Mant}(k))\cdot(1+i)^{k-1}-\text{Reventa}(x-t)\cdot(1+i)^{x-t-1}$ si hay inflaci\'on.\\
+\section*{Tabla de $C_{t,x}$}
+Entradas v\'alidas con $t<x\le\min(t+L,T)$.
+
+\begin{tabular}{c|c|c}\toprule
+ t & x & $C_{t,x}$ \\\midrule
+0 & 1 & 8,00 \\
+0 & 2 & 8,00 \\
+1 & 2 & 8,00 \\
+1 & 3 & 8,00 \\
+2 & 3 & 8,00 \\
+2 & 4 & 8,00 \\
+3 & 4 & 8,00 \\
+\bottomrule\end{tabular}
+\section*{Programaci\'on Din\'amica: $G(t)$ y Siguientes}
+\begin{tabular}{c|c|l}\toprule
+ t & $G(t)$ & Siguientes \\\midrule
+0 & 16,00 & 2 \\
+1 & 16,00 & 2, 3 \\
+2 & 8,00 & 4 \\
+3 & 8,00 & 4 \\
+4 & 0,00 &  \\
+\bottomrule\end{tabular}
+\section*{Todos los planes \`optimos}
+Costo m\'inimo total: $G(0)=\mathbf{16,00}$.\\
+\noindent Ruta 1: \texttt{0 -> 2 -> 4}\\
+\end{document}

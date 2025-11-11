@@ -1,0 +1,106 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\tikzset{every node/.style={circle, draw, minimum size=8mm}}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large Instituto Tecnol\'ogico de Costa Rica\\Escuela de Computaci\'on}\vspace{1cm}
+{\huge Proyecto: Reemplazo de Equipos}\vspace{1cm}
+{\large II Semestre 2025}\vspace{2cm}
+{\large Estudiante(s):}\\Esteban Secaida (y equipo)\vfill
+{\large Fecha: \today}
+\end{titlepage}
+\section*{Datos del Problema}
+Costo inicial: $500.00$, Horizonte $T=10$, Vida \'util $L=5$.\\
+\textbf{Sin ganancia por uso}.\\
+\textbf{Sin inflaci\'on}.\\
+\subsection*{Mantenimiento y Reventa por Edad}
+\begin{tabular}{c|c|c}\toprule
+Edad & Mant. & Reventa\\\midrule
+1 & 0.00 & 0.00 \\
+2 & 0.00 & 0.00 \\
+3 & 0.00 & 0.00 \\
+4 & 0.00 & 0.00 \\
+5 & 0.00 & 0.00 \\
+\bottomrule\end{tabular}
+Se usa $C_{t,x}=\text{Compra}+\sum_{k=1}^{x-t}(\text{Mant}(k))\cdot(1+i)^{k-1}-\text{Reventa}(x-t)\cdot(1+i)^{x-t-1}$ si hay inflaci\'on.\\
+\section*{Tabla de $C_{t,x}$}
+Entradas v\'alidas con $t<x\le\min(t+L,T)$.
+
+\begin{tabular}{c|c|c}\toprule
+ t & x & $C_{t,x}$ \\\midrule
+0 & 1 & 500.00 \\
+0 & 2 & 500.00 \\
+0 & 3 & 500.00 \\
+0 & 4 & 500.00 \\
+0 & 5 & 500.00 \\
+1 & 2 & 500.00 \\
+1 & 3 & 500.00 \\
+1 & 4 & 500.00 \\
+1 & 5 & 500.00 \\
+1 & 6 & 500.00 \\
+2 & 3 & 500.00 \\
+2 & 4 & 500.00 \\
+2 & 5 & 500.00 \\
+2 & 6 & 500.00 \\
+2 & 7 & 500.00 \\
+3 & 4 & 500.00 \\
+3 & 5 & 500.00 \\
+3 & 6 & 500.00 \\
+3 & 7 & 500.00 \\
+3 & 8 & 500.00 \\
+4 & 5 & 500.00 \\
+4 & 6 & 500.00 \\
+4 & 7 & 500.00 \\
+4 & 8 & 500.00 \\
+4 & 9 & 500.00 \\
+5 & 6 & 500.00 \\
+5 & 7 & 500.00 \\
+5 & 8 & 500.00 \\
+5 & 9 & 500.00 \\
+5 & 10 & 500.00 \\
+6 & 7 & 500.00 \\
+6 & 8 & 500.00 \\
+6 & 9 & 500.00 \\
+6 & 10 & 500.00 \\
+7 & 8 & 500.00 \\
+7 & 9 & 500.00 \\
+7 & 10 & 500.00 \\
+8 & 9 & 500.00 \\
+8 & 10 & 500.00 \\
+9 & 10 & 500.00 \\
+\bottomrule\end{tabular}
+\section*{Programaci\'on Din\'amica: $G(t)$ y Siguientes}
+\begin{tabular}{c|c|l}\toprule
+ t & $G(t)$ & Siguientes \\\midrule
+0 & 1000.00 & 5 \\
+1 & 1000.00 & 5, 6 \\
+2 & 1000.00 & 5, 6, 7 \\
+3 & 1000.00 & 5, 6, 7, 8 \\
+4 & 1000.00 & 5, 6, 7, 8, 9 \\
+5 & 500.00 & 10 \\
+6 & 500.00 & 10 \\
+7 & 500.00 & 10 \\
+8 & 500.00 & 10 \\
+9 & 500.00 & 10 \\
+10 & 0.00 &  \\
+\bottomrule\end{tabular}
+\section*{Todos los planes \óptimos}
+Costo mínimo total: $G(0)=\mathbf{1000.00}$.\\
+\noindent Ruta 1: \texttt{0 -> 5 -> 10}\\
+\section*{Grafos de Rutas Óptimas}
+\subsection*{Ruta óptima 1}
+\begin{tikzpicture}[->, >=stealth, node distance=2cm]
+\node (R0Y5) at (0,0) {5};
+\node (R0Y10) at (2,0) {10};
+\draw[->] (R0Y5) -- (R0Y10);
+\end{tikzpicture}
+\bigskip
+\end{document}
