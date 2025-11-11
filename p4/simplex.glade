@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+
+  <object class="GtkWindow" id="main_window">
+    <property name="title">Simplex Solver</property>
+    <property name="default-width">760</property>
+    <property name="default-height">650</property>
+
+    <child>
+      <object class="GtkBox" id="main_vbox">
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+        <property name="margin">10</property>
+
+        <!-- TOP INPUTS -->
+        <child>
+          <object class="GtkGrid" id="grid_top">
+            <property name="row-spacing">5</property>
+            <property name="column-spacing">5</property>
+
+            <child>
+              <object class="GtkLabel" id="label_problem_name">
+                <property name="label">Problem name:</property>
+              </object>
+              <packing><property name="left-attach">0</property><property name="top-attach">0</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkEntry" id="entry_problem_name"/>
+              <packing><property name="left-attach">1</property><property name="top-attach">0</property><property name="width">2</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkLabel" id="label_num_vars">
+                <property name="label">Variables (2–15):</property>
+              </object>
+              <packing><property name="left-attach">0</property><property name="top-attach">1</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkEntry" id="entry_num_vars"><property name="width-chars">4</property></object>
+              <packing><property name="left-attach">1</property><property name="top-attach">1</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkLabel" id="label_num_constraints">
+                <property name="label">Constraints (2–15):</property>
+              </object>
+              <packing><property name="left-attach">2</property><property name="top-attach">1</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkEntry" id="entry_num_constraints"><property name="width-chars">4</property></object>
+              <packing><property name="left-attach">3</property><property name="top-attach">1</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkLabel" id="label_sense">
+                <property name="label">Objective:</property>
+              </object>
+              <packing><property name="left-attach">0</property><property name="top-attach">2</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkComboBoxText" id="combo_sense">
+                <items>
+                  <item>Maximize</item>
+                  <item>Minimize</item>
+                </items>
+              </object>
+              <packing><property name="left-attach">1</property><property name="top-attach">2</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkButton" id="btn_generate"><property name="label">Generate Fields</property></object>
+              <packing><property name="left-attach">2</property><property name="top-attach">2</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkButton" id="btn_solve"><property name="label">Solve</property></object>
+              <packing><property name="left-attach">3</property><property name="top-attach">2</property></packing>
+            </child>
+
+            <child>
+              <object class="GtkCheckButton" id="check_show_steps">
+                <property name="label">Show intermediate tables</property>
+                <property name="active">False</property>
+              </object>
+              <packing><property name="left-attach">0</property><property name="top-attach">3</property><property name="width">2</property></packing>
+            </child>
+          </object>
+        </child>
+
+        <!-- VARIABLE NAMES -->
+        <child>
+          <object class="GtkLabel" id="label_varnames"><property name="label">Variable Names:</property></object>
+        </child>
+        <child>
+          <object class="GtkGrid" id="grid_varnames">
+            <property name="column-spacing">5</property>
+          </object>
+        </child>
+
+        <!-- OBJECTIVE -->
+        <child>
+          <object class="GtkLabel" id="label_obj"><property name="label">Objective coefficients:</property></object>
+        </child>
+        <child>
+          <object class="GtkGrid" id="grid_objective"><property name="column-spacing">5</property></object>
+        </child>
+
+        <!-- CONSTRAINTS -->
+        <child>
+          <object class="GtkLabel" id="label_constraints"><property name="label">Constraints:</property></object>
+        </child>
+        <child>
+          <object class="GtkGrid" id="grid_constraints"><property name="column-spacing">5</property><property name="row-spacing">3</property></object>
+        </child>
+
+        <!-- OUTPUT -->
+        <child>
+          <object class="GtkLabel" id="label_output"><property name="label">Output:</property></object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scroll_output">
+            <property name="vexpand">True</property>
+            <child>
+              <object class="GtkTextView" id="text_output"><property name="editable">False</property></object>
+            </child>
+          </object>
+        </child>
+
+      </object>
+    </child>
+  </object>
+</interface>

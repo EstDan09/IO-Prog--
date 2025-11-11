@@ -1,0 +1,837 @@
+#include "simplex_report.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+/* ===== Utilidades internas ===== */
+
+static inline double *ROW(double *M, int cols, int i) { return M + (size_t)i * (size_t)cols; }
+static inline const double *ROWc(const double *M, int cols, int i) { return M + (size_t)i * (size_t)cols; }
+
+static double dot(const double *a, const double *b, int n)
+{
+    double s = 0.0;
+    for (int i = 0; i < n; ++i)
+        s += a[i] * b[i];
+    return s;
+}
+
+static int almost_zero(double x) { return fabs(x) <= SIMPLEX_EPS; }
+static double clip_negzero(double x) { return (fabs(x) < 1e-12) ? 0.0 : x; }
+
+/* ===== Traza ===== */
+
+void simplex_trace_init(SimplexTrace *tr)
+{
+    if (!tr)
+        return;
+    tr->count = 0;
+    tr->capacity = 0;
+    tr->steps = NULL;
+}
+
+static int trace_append_ext(SimplexTrace *tr, int iter, int rows, int cols,
+                            int entering, int leaving_row, const double *T,
+                            const double *ratios, int ratios_m)
+{
+    if (!tr)
+        return 0; /* traza opcional */
+    if (tr->count == tr->capacity)
+    {
+        int newcap = (tr->capacity == 0) ? 8 : tr->capacity * 2;
+        SimplexStep *ns = (SimplexStep *)realloc(tr->steps, (size_t)newcap * sizeof(SimplexStep));
+        if (!ns)
+            return -1;
+        tr->steps = ns;
+        tr->capacity = newcap;
+    }
+    SimplexStep *st = &tr->steps[tr->count++];
+    st->iter = iter;
+    st->rows = rows;
+    st->cols = cols;
+    st->entering = entering;
+    st->leaving_row = leaving_row;
+    st->tableau = (double *)malloc((size_t)rows * (size_t)cols * sizeof(double));
+    if (!st->tableau)
+        return -1;
+    memcpy(st->tableau, T, (size_t)rows * (size_t)cols * sizeof(double));
+    if (ratios && ratios_m > 0)
+    {
+        st->ratios = (double *)malloc((size_t)ratios_m * sizeof(double));
+        if (!st->ratios)
+            return -1;
+        memcpy(st->ratios, ratios, (size_t)ratios_m * sizeof(double));
+        st->ratios_m = ratios_m;
+    }
+    else
+    {
+        st->ratios = NULL;
+        st->ratios_m = 0;
+    }
+    return 0;
+}
+
+static int trace_append(SimplexTrace *tr, int iter, int rows, int cols,
+                        int entering, int leaving_row, const double *T)
+{
+    return trace_append_ext(tr, iter, rows, cols, entering, leaving_row, T, NULL, 0);
+}
+
+void simplex_trace_free(SimplexTrace *tr)
+{
+    if (!tr)
+        return;
+    for (int i = 0; i < tr->count; ++i)
+    {
+        free(tr->steps[i].tableau);
+        free(tr->steps[i].ratios);
+    }
+    free(tr->steps);
+    tr->steps = NULL;
+    tr->count = tr->capacity = 0;
+}
+
+/* ===== Pivot y selección ===== */
+
+static int argmin_ratio_with_bland(const double *col, const double *b,
+                                   int m, const int *basis,
+                                   int entering_col, int *degenerate_flag)
+{
+    double best = INFINITY;
+    int best_i = -1;
+    for (int i = 1; i <= m; ++i)
+    {
+        double aij = col[i];
+        if (aij > SIMPLEX_EPS)
+        {
+            double ratio = b[i] / aij;
+            if (ratio + SIMPLEX_EPS < best)
+            {
+                best = ratio;
+                best_i = i;
+            }
+            else if (fabs(ratio - best) <= SIMPLEX_EPS)
+            {
+                if (basis && basis[i - 1] > -1)
+                {
+                    if (best_i == -1 || basis[i - 1] < basis[best_i - 1])
+                        best_i = i;
+                }
+            }
+        }
+    }
+    if (degenerate_flag && best_i != -1 && fabs(b[best_i]) <= SIMPLEX_EPS)
+    {
+        *degenerate_flag = 1;
+    }
+    return best_i;
+}
+
+static void pivot(double *T, int rows, int cols, int pr, int pc)
+{
+    double *r = ROW(T, cols, pr);
+    double piv = r[pc];
+    for (int j = 0; j < cols; ++j)
+        r[j] /= piv;
+    for (int i = 0; i < rows; ++i)
+    {
+        if (i == pr)
+            continue;
+        double *ri = ROW(T, cols, i);
+        double factor = ri[pc];
+        if (fabs(factor) > SIMPLEX_EPS)
+        {
+            for (int j = 0; j < cols; ++j)
+            {
+                ri[j] -= factor * r[j];
+            }
+        }
+    }
+}
+
+static void extract_solution(const double *T, int m, int n, int cols,
+                             const int *basis, double *x)
+{
+    for (int j = 0; j < n; ++j)
+        x[j] = 0.0;
+    for (int i = 1; i <= m; ++i)
+    {
+        int var = basis[i - 1];
+        if (var >= 0 && var < n)
+        {
+            const double *ri = ROWc(T, cols, i);
+            x[var] = ri[cols - 1];
+        }
+    }
+}
+
+/* ===== Solver con traza ===== */
+
+int simplex_solve_with_trace(const SimplexProblem *prob,
+                             SimplexResult *result,
+                             int max_iterations,
+                             SimplexTrace *trace)
+{
+    if (!prob || !result || prob->n <= 0 || prob->m <= 0)
+        return -1;
+
+    const int n = prob->n;
+    const int m = prob->m;
+    const int total_vars = n + m;    /* x + slacks */
+    const int rows = m + 1;          /* 0..m (0=objetivo) */
+    const int cols = total_vars + 1; /* vars + RHS */
+
+    double *T = (double *)calloc((size_t)rows * (size_t)cols, sizeof(double));
+    if (!T)
+        return -1;
+
+    /* Fila 0: costos reducidos de partida */
+    for (int j = 0; j < n; ++j)
+    {
+        ROW(T, cols, 0)
+        [j] = (prob->sense == SIMPLEX_MAXIMIZE) ? -prob->c[j] : prob->c[j];
+    }
+    for (int j = n; j < total_vars; ++j)
+        ROW(T, cols, 0)
+    [j] = 0.0;
+    ROW(T, cols, 0)
+    [cols - 1] = 0.0;
+
+    /* Filas 1..m: A | I | b */
+    for (int i = 0; i < m; ++i)
+    {
+        double *ri = ROW(T, cols, i + 1);
+        for (int j = 0; j < n; ++j)
+            ri[j] = prob->A[i * (size_t)n + j];
+        for (int j = 0; j < m; ++j)
+            ri[n + j] = (i == j) ? 1.0 : 0.0;
+        ri[cols - 1] = prob->b[i];
+        if (ri[cols - 1] < -SIMPLEX_EPS)
+        {
+            free(T);
+            return -1;
+        } /* fuera de alcance en esta versión */
+    }
+
+    /* Inicializa estructuras de resultado */
+    result->basis = (int *)malloc((size_t)m * sizeof(int));
+    if (!result->basis)
+    {
+        free(T);
+        return -1;
+    }
+    for (int i = 0; i < m; ++i)
+        result->basis[i] = n + i; /* slacks en la base */
+    result->x = (double *)malloc((size_t)n * sizeof(double));
+    if (!result->x)
+    {
+        free(T);
+        free(result->basis);
+        return -1;
+    }
+    result->final_tableau = NULL;
+    result->rows = rows;
+    result->cols = cols;
+    result->iterations = 0;
+    result->encountered_degeneracy = 0;
+    result->has_alternate = 0;
+    result->alt_var_index = -1;
+    result->alt_tableau = NULL;
+    result->x_alt = (double *)calloc((size_t)n, sizeof(double));
+    result->z_alt = 0.0;
+
+    /* Paso 0: tabla inicial */
+    if (trace && trace_append(trace, 0, rows, cols, -1, -1, T) != 0)
+    {
+        free(T);
+        return -1;
+    }
+
+    int iter = 0;
+    for (; iter < max_iterations; ++iter)
+    {
+        result->iterations = iter;
+
+        /* Selección de variable de entrada */
+        int entering = -1;
+        const double *row0 = ROWc(T, cols, 0);
+
+        if (prob->sense == SIMPLEX_MAXIMIZE)
+        {
+            double minv = -SIMPLEX_EPS;
+            for (int j = 0; j < total_vars; ++j)
+                if (row0[j] < minv)
+                {
+                    minv = row0[j];
+                    entering = j;
+                }
+        }
+        else
+        {
+            double maxv = SIMPLEX_EPS;
+            for (int j = 0; j < total_vars; ++j)
+                if (row0[j] > maxv)
+                {
+                    maxv = row0[j];
+                    entering = j;
+                }
+        }
+
+        if (entering == -1)
+            break; /* óptimo alcanzado */
+
+        /* Test de no acotado */
+        int has_pos = 0;
+        for (int i = 1; i <= m; ++i)
+            if (ROW(T, cols, i)[entering] > SIMPLEX_EPS)
+            {
+                has_pos = 1;
+                break;
+            }
+        if (!has_pos)
+        {
+            result->status = SIMPLEX_UNBOUNDED;
+            extract_solution(T, m, n, cols, result->basis, result->x);
+            result->z = dot(prob->c, result->x, n);
+            /* Snapshot final (sin pivotear) */
+            if (trace)
+                trace_append(trace, iter + 1, rows, cols, entering, -1, T);
+            free(T);
+            return 0;
+        }
+
+        /* Selección de salida y fracciones */
+        double *col = (double *)malloc((size_t)(m + 1) * sizeof(double));
+        double *bvec = (double *)malloc((size_t)(m + 1) * sizeof(double));
+        double *ratios = (double *)malloc((size_t)m * sizeof(double));
+        if (!col || !bvec || !ratios)
+        {
+            free(col);
+            free(bvec);
+            free(ratios);
+            free(T);
+            return -1;
+        }
+        for (int i = 0; i <= m; ++i)
+        {
+            col[i] = ROW(T, cols, i)[entering];
+            bvec[i] = ROW(T, cols, i)[cols - 1];
+        }
+        for (int i = 1; i <= m; ++i)
+        {
+            if (col[i] > SIMPLEX_EPS)
+                ratios[i - 1] = bvec[i] / col[i];
+            else
+                ratios[i - 1] = NAN;
+        }
+        int deg_flag = 0;
+        int leaving_row = argmin_ratio_with_bland(col, bvec, m, result->basis, entering, &deg_flag);
+        free(col);
+        free(bvec);
+        if (deg_flag)
+            result->encountered_degeneracy = 1;
+
+        /* Snapshot ANTES del pivote con fracciones */
+        if (trace && trace_append_ext(trace, iter + 1, rows, cols, entering, leaving_row, T, ratios, m) != 0)
+        {
+            free(ratios);
+            free(T);
+            return -1;
+        }
+        free(ratios);
+
+        /* Pivotear */
+        pivot(T, rows, cols, leaving_row, entering);
+        result->basis[leaving_row - 1] = entering;
+    }
+
+    if (iter >= max_iterations)
+    {
+        result->status = SIMPLEX_ITER_LIMIT;
+    }
+    else
+    {
+        result->status = SIMPLEX_OK;
+    }
+
+    /* Extraer solución y valor Z */
+    extract_solution(T, m, n, cols, result->basis, result->x);
+    result->z = dot(prob->c, result->x, n);
+
+    /* Copiar tableau final y agregarlo a la traza como paso final */
+    result->final_tableau = (double *)malloc((size_t)rows * (size_t)cols * sizeof(double));
+    if (result->final_tableau)
+        memcpy(result->final_tableau, T, (size_t)rows * (size_t)cols * sizeof(double));
+    if (trace)
+        trace_append(trace, iter + (result->status == SIMPLEX_OK ? 1 : 0), rows, cols, -1, -1, T);
+
+    /* === Detección de múltiples soluciones ===
+       Si existe NO-básica con costo reducido ~0 (original o holgura),
+       hacemos un pivote extra para mostrar tabla alterna y x_alt. */
+    if (result->status == SIMPLEX_OK)
+    {
+        int *is_basic = (int *)calloc((size_t)(n + m), sizeof(int));
+        if (is_basic)
+        {
+            for (int i = 0; i < m; ++i)
+            {
+                int v = result->basis[i];
+                if (v >= 0 && v < (n + m))
+                    is_basic[v] = 1;
+            }
+            const double *row0f = ROWc(T, cols, 0);
+
+            /* Preferir variable original con costo reducido ~0; si no hay, aceptar holgura. */
+            int alt_col = -1;
+            for (int j = 0; j < n + m; ++j)
+            {
+                if (!is_basic[j] && fabs(row0f[j]) <= SIMPLEX_EPS)
+                {
+                    alt_col = j;
+                    if (j < n)
+                        break; /* si es original, paramos aquí */
+                }
+            }
+
+            if (alt_col != -1)
+            {
+                double *Tc = (double *)malloc((size_t)rows * (size_t)cols * sizeof(double));
+                int *basis_c = (int *)malloc((size_t)m * sizeof(int));
+                if (Tc && basis_c)
+                {
+                    memcpy(Tc, T, (size_t)rows * (size_t)cols * sizeof(double));
+                    memcpy(basis_c, result->basis, (size_t)m * sizeof(int));
+
+                    /* Seleccionar fila saliente habitual (mínima fracción) para alt_col */
+                    int leaving2 = -1;
+                    double best = INFINITY;
+                    for (int i = 1; i <= m; ++i)
+                    {
+                        double aij = ROW(Tc, cols, i)[alt_col];
+                        double bi = ROW(Tc, cols, i)[cols - 1];
+                        if (aij > SIMPLEX_EPS)
+                        {
+                            double ratio = bi / aij;
+                            if (ratio + SIMPLEX_EPS < best)
+                            {
+                                best = ratio;
+                                leaving2 = i;
+                            }
+                        }
+                    }
+                    if (leaving2 != -1)
+                    {
+                        pivot(Tc, rows, cols, leaving2, alt_col);
+                        basis_c[leaving2 - 1] = alt_col;
+
+                        /* Guardar tabla alterna, x_alt y z_alt */
+                        result->alt_tableau = (double *)malloc((size_t)rows * (size_t)cols * sizeof(double));
+                        if (result->alt_tableau)
+                            memcpy(result->alt_tableau, Tc, (size_t)rows * (size_t)cols * sizeof(double));
+                        extract_solution(Tc, m, n, cols, basis_c, result->x_alt);
+                        result->z_alt = dot(prob->c, result->x_alt, n);
+
+                        result->has_alternate = 1;
+                        result->alt_var_index = alt_col;
+                        result->status = SIMPLEX_MULTIPLE; /* <-- marcar explícitamente */
+                    }
+                }
+                free(Tc);
+                free(basis_c);
+            }
+            free(is_basic);
+        }
+    }
+
+    free(T);
+    return 0;
+}
+
+void simplex_free_result(SimplexResult *r)
+{
+    if (!r)
+        return;
+    free(r->basis);
+    r->basis = NULL;
+    free(r->x);
+    r->x = NULL;
+    free(r->final_tableau);
+    r->final_tableau = NULL;
+    free(r->alt_tableau);
+    r->alt_tableau = NULL;
+    free(r->x_alt);
+    r->x_alt = NULL;
+}
+
+/* ===== Texto estado ===== */
+
+const char *simplex_status_str(SimplexStatus s)
+{
+    switch (s)
+    {
+    case SIMPLEX_OK:
+        return "Óptimo";
+    case SIMPLEX_UNBOUNDED:
+        return "No acotado";
+    case SIMPLEX_MULTIPLE:
+        return "Óptimo (múltiples soluciones)";
+    case SIMPLEX_DEGENERATE:
+        return "Degenerado";
+    case SIMPLEX_INFEASIBLE:
+        return "Infactible";
+    case SIMPLEX_ITER_LIMIT:
+        return "Límite de iteraciones";
+    default:
+        return "Desconocido";
+    }
+}
+
+/* ===== Generador LaTeX ===== */
+
+static void tex_print_number(FILE *f, double v)
+{
+    v = clip_negzero(v);
+    fprintf(f, "%.6f", v);
+}
+
+static void tex_varname(FILE *f, int j, int n)
+{
+    if (j < n)
+        fprintf(f, "$x_{%d}$", j + 1);
+    else
+        fprintf(f, "$s_{%d}$", j - n + 1);
+}
+
+static void tex_write_table_step(FILE *f, const SimplexStep *st, int n, int m)
+{
+    const int total_vars = n + m;
+    const int rows = st->rows;
+    const int cols = st->cols;
+    const double *T = st->tableau;
+
+    fprintf(f, "\\begin{table}[h]\n\\centering\n");
+    if (st->entering >= 0 && st->leaving_row >= 0)
+    {
+        fprintf(f, "\\caption{Iteraci\\'on %d: entra la columna ", st->iter);
+        tex_varname(f, st->entering, n);
+        fprintf(f, " y sale la fila $R_{%d}$.}\n", st->leaving_row);
+    }
+    else if (st->iter == 0)
+    {
+        fprintf(f, "\\caption{Tabla inicial.}\n");
+    }
+    else
+    {
+        fprintf(f, "\\caption{Tabla final.}\n");
+    }
+
+    fprintf(f, "\\setlength{\\tabcolsep}{6pt}\n");
+    fprintf(f, "\\renewcommand{\\arraystretch}{1.15}\n");
+    fprintf(f, "\\begin{tabular}{l");
+    for (int j = 0; j < total_vars; ++j)
+        fprintf(f, "r");
+    fprintf(f, "r}\n\\toprule\n");
+
+    /* Encabezados: x1..xn, s1..sm, b */
+    fprintf(f, " & ");
+    for (int j = 0; j < n; ++j)
+        fprintf(f, "$x_{%d}$ & ", j + 1);
+    for (int j = 0; j < m; ++j)
+        fprintf(f, "$s_{%d}$ & ", j + 1);
+    fprintf(f, "$b$ \\\\\n\\midrule\n");
+
+    /* Fila 0: Z */
+    fprintf(f, "$Z$ & ");
+    for (int j = 0; j < cols; ++j)
+    {
+        if (j == cols - 1)
+        { /* b */
+            tex_print_number(f, ROWc(T, cols, 0)[j]);
+            fprintf(f, " \\\\\n");
+        }
+        else
+        {
+            int color_col = (st->entering == j) ? 1 : 0;
+            if (color_col)
+                fprintf(f, "\\cellcolor{blue!12}");
+            tex_print_number(f, ROWc(T, cols, 0)[j]);
+            fprintf(f, " & ");
+        }
+    }
+
+    /* Filas 1..m */
+    for (int i = 1; i < rows; ++i)
+    {
+        fprintf(f, "$R_{%d}$ & ", i);
+        for (int j = 0; j < cols; ++j)
+        {
+            int color_col = (st->entering == j);
+            int color_row = (st->leaving_row == i);
+            int is_pivot = color_col && color_row;
+
+            if (j == cols - 1)
+            { /* b */
+                if (color_row)
+                    fprintf(f, "\\cellcolor{green!12}");
+                tex_print_number(f, ROWc(T, cols, i)[j]);
+                fprintf(f, " \\\\\n");
+            }
+            else
+            {
+                if (is_pivot)
+                    fprintf(f, "\\cellcolor{orange!35}");
+                else if (color_col)
+                    fprintf(f, "\\cellcolor{blue!12}");
+                else if (color_row)
+                    fprintf(f, "\\cellcolor{green!12}");
+                tex_print_number(f, ROWc(T, cols, i)[j]);
+                fprintf(f, " & ");
+            }
+        }
+    }
+
+    fprintf(f, "\\bottomrule\n\\end{tabular}\n");
+
+    /* Fracciones (si hay) */
+    if (st->ratios && st->ratios_m == m && st->entering >= 0 && st->leaving_row > 0)
+    {
+        fprintf(f, "\\\\[4pt]\\textbf{Fracciones } $b_i/a_{i,j}$ para la columna ");
+        tex_varname(f, st->entering, n);
+        fprintf(f, ":\\\\\n");
+        for (int i = 1; i <= m; ++i)
+        {
+            double r = st->ratios[i - 1];
+            if (!isnan(r))
+            {
+                fprintf(f, "$R_{%d} = %.6f$", i, clip_negzero(r));
+                if (i == st->leaving_row)
+                    fprintf(f, " \\;\\;\\textbf{(m\\'inima)}");
+                if (i < m)
+                    fprintf(f, ",\\ ");
+            }
+        }
+        fprintf(f, ".\n");
+    }
+    fprintf(f, "\\end{table}\n\n");
+}
+
+static void write_multiple_solutions_section(FILE *f,
+                                             const SimplexProblem *prob,
+                                             const SimplexResult *res)
+{
+    int n = prob->n, m = prob->m;
+    int rows = res->rows, cols = res->cols;
+    if (res->alt_var_index < 0)
+        return;
+    if (!res->final_tableau)
+        return;
+
+    int j = res->alt_var_index;
+
+    /* Calcular theta: mínimo bi/aij con aij>0 en la columna j */
+    double theta = INFINITY;
+    for (int i = 1; i <= m; ++i)
+    {
+        double aij = ROWc(res->final_tableau, cols, i)[j];
+        double bi = ROWc(res->final_tableau, cols, i)[cols - 1];
+        if (aij > SIMPLEX_EPS)
+        {
+            double r = bi / aij;
+            if (r + SIMPLEX_EPS < theta)
+                theta = r;
+        }
+    }
+    if (!isfinite(theta))
+        theta = 0.0;
+
+    fprintf(f, "\\subsection*{M\\'ultiples soluciones}\n");
+    fprintf(f, "Se detect\\'o una variable no b\\'asica con costo reducido cero: ");
+    tex_varname(f, j, n);
+    fprintf(f, ". Esto implica la existencia de un conjunto infinito de \\'{o}ptimos.\\\\[4pt]\n");
+
+    /* Parametrización general */
+    fprintf(f, "Una parametrizaci\\'on de la arista \\'optima es:\n");
+    fprintf(f, "$$");
+    tex_varname(f, j, n);
+    fprintf(f, " = t,\\quad x_{B_i} = b_i - a_{i,%d}\\,t,\\quad 0 \\le t \\le \\theta,$$ ", j + 1);
+    fprintf(f, "tomando $\\theta = %.6f$ de las fracciones v\\'alidas.\\\\[6pt]\n", clip_negzero(theta));
+
+    /* Mostrar 3 puntos adicionales en variables originales */
+    double t1 = theta / 4.0, t2 = theta / 2.0, t3 = (3.0 * theta) / 4.0;
+    double *xpt = (double *)calloc((size_t)n, sizeof(double));
+    if (xpt)
+    {
+        for (int k = 0; k < 3; ++k)
+        {
+            double t = (k == 0) ? t1 : (k == 1) ? t2
+                                                : t3;
+            for (int jj = 0; jj < n; ++jj)
+                xpt[jj] = 0.0;
+            /* Solo fijamos x_j=t si j es original; si es holgura, x_j no existe y no se imprime */
+            if (j < n)
+                xpt[j] = t;
+            for (int i = 1; i <= m; ++i)
+            {
+                int var = res->basis[i - 1];
+                if (var >= 0 && var < n)
+                {
+                    double bi = ROWc(res->final_tableau, cols, i)[cols - 1];
+                    double aij = ROWc(res->final_tableau, cols, i)[j];
+                    xpt[var] = bi - aij * t;
+                }
+            }
+            fprintf(f, "Punto %d: $t=%.6f$ \\;$\\Rightarrow$\\; ", k + 1, clip_negzero(t));
+            for (int jj = 0; jj < n; ++jj)
+            {
+                fprintf(f, "$x_{%d}=%.6f$", jj + 1, clip_negzero(xpt[jj]));
+                if (jj + 1 < n)
+                    fprintf(f, ",\\ ");
+            }
+            fprintf(f, ".\\\\\n");
+        }
+        free(xpt);
+    }
+
+    /* Tabla alterna si la tenemos */
+    if (res->alt_tableau)
+    {
+        fprintf(f, "\\paragraph{Tabla final alterna.}\n");
+        SimplexStep fake = (SimplexStep){0};
+        fake.iter = res->iterations + 2;
+        fake.rows = rows;
+        fake.cols = cols;
+        fake.entering = -1;
+        fake.leaving_row = -1;
+        fake.tableau = res->alt_tableau;
+        tex_write_table_step(f, &fake, n, m);
+
+        fprintf(f, "Soluci\\'on alterna b\\'asica: ");
+        for (int jj = 0; jj < n; ++jj)
+        {
+            fprintf(f, "$x_{%d}=%.6f$", jj + 1, clip_negzero(res->x_alt ? res->x_alt[jj] : 0.0));
+            if (jj + 1 < n)
+                fprintf(f, ",\\ ");
+        }
+        fprintf(f, ";\\quad Z = %.6f.\\\\\n\n", clip_negzero(res->z_alt));
+    }
+}
+
+int simplex_write_latex_report(const char *tex_path,
+                               const SimplexProblem *prob,
+                               const SimplexResult *res,
+                               const SimplexTrace *trace)
+{
+    if (!tex_path || !prob || !res || !trace)
+        return -1;
+
+    FILE *f = fopen(tex_path, "w");
+    if (!f) return -1;
+
+    /* ========== PREAMBLE & COVER PAGE ========== */
+    fprintf(f,
+        "\\documentclass[11pt]{article}\n"
+        "\\usepackage[spanish]{babel}\n"
+        "\\usepackage[utf8]{inputenc}\n"
+        "\\usepackage[T1]{fontenc}\n"
+        "\\usepackage[a4paper,margin=2.2cm]{geometry}\n"
+        "\\usepackage{amsmath,amssymb,booktabs,array,colortbl}\n"
+        "\\usepackage[table,xcdraw]{xcolor}\n"
+        "\\usepackage{hyperref,graphicx}\n"
+        "\\begin{document}\n"
+        "\\begin{titlepage}\n"
+        "\\centering\n"
+        "{\\Huge Proyecto 4 - Otro S\\'implex M\\'as}\\\\[1em]\n"
+        "{\\Large %s}\\\\[2em]\n"
+        "{\\large Curso: Investigaci\\'on de Operaciones\\\\Semestre: 2025-I}\\\\[4em]\n"
+        "\\vfill\n"
+        "\\textbf{Generado autom\\'aticamente por el solver Simplex}\\\\[2em]\n"
+        "Fecha: \\today\n"
+        "\\end{titlepage}\n"
+        "\\newpage\n"
+        "\\tableofcontents\n"
+        "\\newpage\n",
+        prob->problem_name ? prob->problem_name : "Problema Simplex"
+    );
+
+    /* ========== PROBLEM STATEMENT ========== */
+    fputs("\\section*{Planteamiento del Problema}\n", f);
+    fprintf(f, "%s \\[ Z = ",
+            prob->sense == SIMPLEX_MAXIMIZE ? "Maximizar" : "Minimizar");
+
+    for (int j = 0; j < prob->n; ++j) {
+        if (j > 0 && prob->c[j] >= 0)
+            fputs("+", f);
+        fprintf(f, "%.3f%s ", prob->c[j],
+                (prob->var_names && prob->var_names[j])
+                    ? prob->var_names[j]
+                    : "x");
+    }
+    fputs("\\]\nSujeto a:\\[ \n", f);
+
+    for (int i = 0; i < prob->m; ++i) {
+        for (int j = 0; j < prob->n; ++j) {
+            if (j > 0 && prob->A[i * prob->n + j] >= 0)
+                fputs("+", f);
+            fprintf(f, "%.3f%s ", prob->A[i * prob->n + j],
+                    (prob->var_names && prob->var_names[j])
+                        ? prob->var_names[j]
+                        : "x");
+        }
+        fprintf(f, "\\le %.3f\\\\\n", prob->b[i]);
+    }
+    fputs("x_i \\ge 0 \\text{ para todo } i.\\]\n", f);
+
+    /* ========== SIMPLEX METHOD DESCRIPTION ========== */
+    fputs("\\section*{Descripci\\'on del M\\'etodo S\\'implex}\n", f);
+    fputs("El algoritmo S\\'implex, propuesto por George Dantzig en 1947, "
+          "es un procedimiento iterativo que explora los v\\'ertices del poliedro factible "
+          "para encontrar la soluci\\'on \\textit{\\'optima} de un problema lineal. "
+          "En cada iteraci\\'on se determina una variable que entra a la base y otra que sale, "
+          "hasta que no existen mejoras posibles en la funci\\'on objetivo.\\\\[1em]\n", f);
+
+    /* ========== SIMPLEX TABLES ========== */
+    fputs("\\section*{Tablas del M\\'etodo S\\'implex}\n", f);
+    for (int k = 0; k < trace->count; ++k)
+        tex_write_table_step(f, &trace->steps[k], prob->n, prob->m);
+
+    /* ========== RESULTS ========== */
+    fputs("\\section*{Resultados y Casos Especiales}\n", f);
+    fprintf(f, "Estado del problema: \\textbf{%s}.\\\\\n",
+            simplex_status_str(res->status));
+    if (res->status == SIMPLEX_OK || res->status == SIMPLEX_MULTIPLE) {
+        fprintf(f, "Valor \\textit{\\'optimo}: $Z^* = %.6f$.\\\\[4pt]\n", res->z);
+        fputs("Soluci\\'on \\textit{\\'optima}:\\\\[4pt]\n", f);
+        fputs("\\[ ", f);
+        for (int j = 0; j < prob->n; ++j) {
+            fprintf(f, "%s = %.6f", 
+                    (prob->var_names && prob->var_names[j])
+                        ? prob->var_names[j]
+                        : "x",
+                    res->x[j]);
+            if (j + 1 < prob->n)
+                fputs(",\\;", f);
+        }
+        fputs(". \\]\n", f);
+
+        if (res->encountered_degeneracy)
+            fputs("\\emph{Nota:} Se detect\\'o degeneraci\\'on (al menos un ratio m\\'inimo fue 0). "
+                  "Se aplic\\'o la regla de Bland para evitar ciclos.\\\\[6pt]\n", f);
+
+        if (res->has_alternate && res->alt_var_index >= 0)
+            fputs("El problema presenta \\textbf{m\\'ultiples soluciones \\textit{\\'optimas}}. "
+                  "Se puede obtener una familia de soluciones a lo largo de la recta de \\textit{\\'optimos}.\\\\[6pt]\n", f);
+    }
+    else if (res->status == SIMPLEX_UNBOUNDED)
+        fputs("\\textbf{Problema no acotado:} la funci\\'on objetivo puede crecer indefinidamente.\\\\\n", f);
+    else if (res->status == SIMPLEX_ITER_LIMIT)
+        fputs("\\textbf{L\\'{\\i}mite de iteraciones alcanzado.} Se recomienda aumentar el l\\'{\\i}mite o revisar la degeneraci\\'on.\\\\\n", f);
+
+    /* ========== FOOTER ========== */
+    fputs("\\vfill\\smallskip\\noindent Documento generado autom\\'aticamente por "
+          "\\texttt{simplex\\_report.c}.\\\\\n", f);
+    fputs("\\end{document}\n", f);
+
+    fclose(f);
+    return 0;
+}
