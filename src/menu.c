@@ -7,10 +7,13 @@
 #include <errno.h>
 #include <limits.h>
 
-/* Mapa: botón -> PID del proceso lanzado */
-static GHashTable *pending_map = NULL;
+/* PID del proceso 'pending' (0 = no hay proceso corriendo) */
+// static GPid pending_pid = 0;
 
-/* ===== Prototipos ===== */
+// Información obtenida de: https://docs.gtk.org/glib/struct.HashTable.html
+static GHashTable *pending_map = NULL; 
+
+//prototipos
 static void on_destroy(GtkWidget *w, gpointer data);
 static void on_quit_clicked(GtkButton *button, gpointer user_data);
 // static void on_pending_exit(GPid pid, gint status, gpointer data);
@@ -85,7 +88,26 @@ static void on_destroy(GtkWidget *w, gpointer data)
 static void launch_pending(GtkButton *button, gpointer user_data)
 {
     (void)user_data;
-    (void)button; 
+
+    GPid existing_pid = GPOINTER_TO_INT(g_hash_table_lookup(pending_map, button));
+    if (existing_pid > 0) {
+    GtkWidget *dialog = gtk_message_dialog_new(
+        GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))), // parent
+        GTK_DIALOG_MODAL,
+        GTK_MESSAGE_WARNING,
+        GTK_BUTTONS_OK,
+        "Ya hay un 'pending' corriendo para este botón (PID=%d)",
+        existing_pid
+    );
+
+    gtk_style_context_add_class(
+    gtk_widget_get_style_context(dialog),
+    "warning-dialog"
+);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    return;
+}
 
 
     char *argv[] = {"./bin/pending", NULL};
@@ -93,17 +115,17 @@ static void launch_pending(GtkButton *button, gpointer user_data)
     GPid pid = 0;
 
     gboolean ok = g_spawn_async(
-        NULL,
-        argv,
-        NULL,
-        G_SPAWN_DO_NOT_REAP_CHILD,
-        child_setup_func,
-        NULL,
-        &pid,
-        &error);
+         NULL,
+         argv,
+         NULL,
+         G_SPAWN_DO_NOT_REAP_CHILD,
+         child_setup_func,
+         NULL,
+         &pid,
+         &error
+    );       
 
-    if (!ok)
-    {
+    if (!ok) {
         g_printerr("No se pudo lanzar pending: %s\n",
                    (error && error->message) ? error->message : "error desconocido");
         if (error)
