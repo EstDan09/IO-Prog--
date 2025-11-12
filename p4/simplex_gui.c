@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "simplex_report.h"
+#include <json-c/json.h>  // install libjson-c-dev
 
 // === Widget references ===
 static GtkWidget *entry_problem_name;
@@ -62,7 +63,7 @@ static void generate_and_open_pdf(const char *tex_path) {
         snprintf(cmd, sizeof(cmd), "evince --presentation \"%s\" &", pdf_path);
         (void)system(cmd);
     } else {
-        show_error("Error: PDF file not generated. Check LaTeX compilation output.");
+        // show_error("Error: PDF file not generated. Check LaTeX compilation output.");
     }
 }
 
@@ -99,7 +100,7 @@ static void on_generate_clicked(GtkButton *btn, gpointer user_data) {
     for (int j = 0; j < n_vars; j++) {
         entries_varnames[j] = gtk_entry_new();
         char defname[24];
-        snprintf(defname, sizeof(defname), "$x_%d$", j + 1);
+        snprintf(defname, sizeof(defname), "x_%d", j + 1);
         gtk_entry_set_text(GTK_ENTRY(entries_varnames[j]), defname);
         gtk_entry_set_width_chars(GTK_ENTRY(entries_varnames[j]), 8);
         gtk_grid_attach(GTK_GRID(grid_varnames), entries_varnames[j], j, 0, 1, 1);
@@ -222,6 +223,155 @@ p.problem_name = gtk_entry_get_text(GTK_ENTRY(entry_problem_name));
     g_free(c); g_free(A); g_free(b);
 }
 
+static void on_save_clicked(GtkButton *btn, gpointer user_data)
+{
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(
+        "Guardar problema",
+        NULL,
+        GTK_FILE_CHOOSER_ACTION_SAVE,
+        "_Cancelar", GTK_RESPONSE_CANCEL,
+        "_Guardar", GTK_RESPONSE_ACCEPT,
+        NULL);
+
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "problema.simplex");
+
+    GtkFileFilter *filter = gtk_file_filter_new();
+    gtk_file_filter_add_pattern(filter, "*.simplex");
+    gtk_file_filter_set_name(filter, "Archivos Simplex (*.simplex)");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+
+        // Build JSON object
+        json_object *root = json_object_new_object();
+        json_object_object_add(root, "name",
+            json_object_new_string(gtk_entry_get_text(GTK_ENTRY(entry_problem_name))));
+        json_object_object_add(root, "sense",
+            json_object_new_string(gtk_combo_box_get_active(GTK_COMBO_BOX(combo_sense)) == 0 ? "max" : "min"));
+        json_object_object_add(root, "n", json_object_new_int(n_vars));
+        json_object_object_add(root, "m", json_object_new_int(n_cons));
+
+        // varnames
+        json_object *varnames = json_object_new_array();
+        for (int j = 0; j < n_vars; ++j)
+            json_object_array_add(varnames,
+                json_object_new_string(gtk_entry_get_text(GTK_ENTRY(entries_varnames[j]))));
+        json_object_object_add(root, "varnames", varnames);
+
+        // c
+        json_object *jc = json_object_new_array();
+        for (int j = 0; j < n_vars; ++j)
+            json_object_array_add(jc,
+                json_object_new_double(atof(gtk_entry_get_text(GTK_ENTRY(entries_c[j])))));
+        json_object_object_add(root, "c", jc);
+
+        // A
+        json_object *jA = json_object_new_array();
+        for (int i = 0; i < n_cons; ++i) {
+            json_object *row = json_object_new_array();
+            for (int j = 0; j < n_vars; ++j)
+                json_object_array_add(row,
+                    json_object_new_double(atof(gtk_entry_get_text(GTK_ENTRY(entries_A[i][j])))));
+            json_object_array_add(jA, row);
+        }
+        json_object_object_add(root, "A", jA);
+
+        // b
+        json_object *jb = json_object_new_array();
+        for (int i = 0; i < n_cons; ++i)
+            json_object_array_add(jb,
+                json_object_new_double(atof(gtk_entry_get_text(GTK_ENTRY(entries_b[i])))));
+        json_object_object_add(root, "b", jb);
+
+        // Write file
+        FILE *f = fopen(filename, "w");
+        if (f) {
+            fputs(json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY), f);
+            fclose(f);
+        }
+
+        json_object_put(root);
+        g_free(filename);
+    }
+    gtk_widget_destroy(dialog);
+}
+
+static void on_load_clicked(GtkButton *btn, gpointer user_data)
+{
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(
+        "Cargar problema",
+        NULL,
+        GTK_FILE_CHOOSER_ACTION_OPEN,
+        "_Cancelar", GTK_RESPONSE_CANCEL,
+        "_Abrir", GTK_RESPONSE_ACCEPT,
+        NULL);
+
+    GtkFileFilter *filter = gtk_file_filter_new();
+    gtk_file_filter_add_pattern(filter, "*.simplex");
+    gtk_file_filter_set_name(filter, "Archivos Simplex (*.simplex)");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+
+        json_object *root = json_object_from_file(filename);
+        if (root) {
+            json_object *jn = NULL, *jm = NULL;
+            json_object_object_get_ex(root, "n", &jn);
+            json_object_object_get_ex(root, "m", &jm);
+            n_vars = json_object_get_int(jn);
+            n_cons = json_object_get_int(jm);
+
+            gtk_entry_set_text(GTK_ENTRY(entry_num_vars), json_object_get_string(jn));
+            gtk_entry_set_text(GTK_ENTRY(entry_num_constraints), json_object_get_string(jm));
+
+            on_generate_clicked(NULL, NULL); // rebuild grids dynamically
+
+            json_object *name;
+            if (json_object_object_get_ex(root, "name", &name))
+                gtk_entry_set_text(GTK_ENTRY(entry_problem_name),
+                                   json_object_get_string(name));
+
+            json_object *sense;
+            if (json_object_object_get_ex(root, "sense", &sense))
+                gtk_combo_box_set_active(GTK_COMBO_BOX(combo_sense),
+                    strcmp(json_object_get_string(sense), "max") == 0 ? 0 : 1);
+
+            json_object *varnames;
+            if (json_object_object_get_ex(root, "varnames", &varnames))
+                for (int j = 0; j < n_vars && j < json_object_array_length(varnames); ++j)
+                    gtk_entry_set_text(GTK_ENTRY(entries_varnames[j]),
+                                       json_object_get_string(json_object_array_get_idx(varnames, j)));
+
+            json_object *jc;
+            if (json_object_object_get_ex(root, "c", &jc))
+                for (int j = 0; j < n_vars && j < json_object_array_length(jc); ++j)
+                    gtk_entry_set_text(GTK_ENTRY(entries_c[j]),
+                                       json_object_to_json_string(json_object_array_get_idx(jc, j)));
+
+            json_object *jA;
+            if (json_object_object_get_ex(root, "A", &jA))
+                for (int i = 0; i < n_cons && i < json_object_array_length(jA); ++i) {
+                    json_object *row = json_object_array_get_idx(jA, i);
+                    for (int j = 0; j < n_vars && j < json_object_array_length(row); ++j)
+                        gtk_entry_set_text(GTK_ENTRY(entries_A[i][j]),
+                                           json_object_to_json_string(json_object_array_get_idx(row, j)));
+                }
+
+            json_object *jb;
+            if (json_object_object_get_ex(root, "b", &jb))
+                for (int i = 0; i < n_cons && i < json_object_array_length(jb); ++i)
+                    gtk_entry_set_text(GTK_ENTRY(entries_b[i]),
+                                       json_object_to_json_string(json_object_array_get_idx(jb, i)));
+
+            json_object_put(root);
+        }
+        g_free(filename);
+    }
+    gtk_widget_destroy(dialog);
+}
+
 // ------------------------------------------------------------
 // Main
 // ------------------------------------------------------------
@@ -240,11 +390,15 @@ int main(int argc, char *argv[]) {
     grid_constraints     = GTK_WIDGET(gtk_builder_get_object(builder, "grid_constraints"));
     check_show_steps     = GTK_WIDGET(gtk_builder_get_object(builder, "check_show_steps"));
     text_output          = GTK_WIDGET(gtk_builder_get_object(builder, "text_output"));
+    GtkWidget *btn_save = GTK_WIDGET(gtk_builder_get_object(builder, "btn_save"));
+    GtkWidget *btn_load = GTK_WIDGET(gtk_builder_get_object(builder, "btn_load"));
 
     g_signal_connect(gtk_builder_get_object(builder, "btn_generate"), "clicked",
                      G_CALLBACK(on_generate_clicked), NULL);
     g_signal_connect(gtk_builder_get_object(builder, "btn_solve"), "clicked",
                      G_CALLBACK(on_solve_clicked), NULL);
+    g_signal_connect(btn_save, "clicked", G_CALLBACK(on_save_clicked), NULL);
+    g_signal_connect(btn_load, "clicked", G_CALLBACK(on_load_clicked), NULL);
 
     gtk_widget_show_all(window);
     gtk_main();

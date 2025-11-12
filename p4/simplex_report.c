@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /* ===== Utilidades internas ===== */
 
@@ -19,6 +22,59 @@ static double dot(const double *a, const double *b, int n)
 
 static int almost_zero(double x) { return fabs(x) <= SIMPLEX_EPS; }
 static double clip_negzero(double x) { return (fabs(x) < 1e-12) ? 0.0 : x; }
+
+
+/* ====== Manejo seguro de nombres LaTeX ====== */
+static char *latex_safe_varname(const char *raw, int index)
+{
+    if (!raw || !*raw)
+    {
+        char *buf = malloc(16);
+        snprintf(buf, 16, "$x_{%d}$", index + 1);
+        return buf;
+    }
+    if (strchr(raw, '$'))
+        return strdup(raw);
+
+    const char *special = "_%&#\\";
+    size_t len = strlen(raw);
+    char *buf = malloc(len * 2 + 10);
+    char *dst = buf;
+    *dst++ = '$';
+    for (const char *p = raw; *p; ++p)
+    {
+        if (strchr(special, *p))
+            *dst++ = '\\';
+        *dst++ = *p;
+    }
+    *dst++ = '$';
+    *dst = '\0';
+    return buf;
+}
+
+// === Versión sin envoltorio $...$ para entornos matemáticos \[ \]
+static char *latex_safe_varname_nomath(const char *raw, int index)
+{
+    if (!raw || !*raw)
+    {
+        char *buf = malloc(16);
+        snprintf(buf, 16, "x_%d", index + 1);
+        return buf;
+    }
+
+    const char *special = "_%&#\\";
+    size_t len = strlen(raw);
+    char *buf = malloc(len * 2 + 2);
+    char *dst = buf;
+    for (const char *p = raw; *p; ++p)
+    {
+        if (strchr(special, *p))
+            *dst++ = '\\';
+        *dst++ = *p;
+    }
+    *dst = '\0';
+    return buf;
+}
 
 /* ===== Traza ===== */
 
@@ -717,18 +773,43 @@ static void write_multiple_solutions_section(FILE *f,
     }
 }
 
-int simplex_write_latex_report(const char *tex_path,
+int simplex_write_latex_report(const char *base_name,
                                const SimplexProblem *prob,
                                const SimplexResult *res,
                                const SimplexTrace *trace)
 {
-    if (!tex_path || !prob || !res || !trace)
+    if (!base_name || !prob || !res || !trace)
         return -1;
+
+    /* ======== Sanitize folder name ======== */
+    char folder[256];
+    if (prob->problem_name && strlen(prob->problem_name) > 0) {
+        // Copy and replace spaces or forbidden chars with underscores
+        size_t k = 0;
+        for (const char *p = prob->problem_name; *p && k < sizeof(folder) - 1; ++p) {
+            char c = *p;
+            folder[k++] = (c == ' ' || c == '/' || c == '\\' || c == ':' || c == '*'
+                           || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
+                              ? '_'
+                              : c;
+        }
+        folder[k] = '\0';
+    } else {
+        strcpy(folder, "Reporte_Simplex");
+    }
+
+    /* ======== Create folder if not exists ======== */
+    mkdir(folder, 0755);
+
+    /* ======== Build file paths ======== */
+    char tex_path[512], pdf_path[512];
+    snprintf(tex_path, sizeof(tex_path), "%s/reporte_simplex.tex", folder);
+    snprintf(pdf_path, sizeof(pdf_path), "%s/reporte_simplex.pdf", folder);
 
     FILE *f = fopen(tex_path, "w");
     if (!f) return -1;
 
-    /* ========== PREAMBLE & COVER PAGE ========== */
+    /* ======== LaTeX preamble & cover page ======== */
     fprintf(f,
         "\\documentclass[11pt]{article}\n"
         "\\usepackage[spanish]{babel}\n"
@@ -745,16 +826,14 @@ int simplex_write_latex_report(const char *tex_path,
         "{\\Large %s}\\\\[2em]\n"
         "{\\large Curso: Investigaci\\'on de Operaciones\\\\Semestre: 2025-I}\\\\[4em]\n"
         "\\vfill\n"
-        "\\textbf{Generado autom\\'aticamente por el solver Simplex}\\\\[2em]\n"
+        "\\textbf{Esteban Secaida - Fabian Bustos}\\\\[2em]\n"
         "Fecha: \\today\n"
         "\\end{titlepage}\n"
-        "\\newpage\n"
-        "\\tableofcontents\n"
         "\\newpage\n",
         prob->problem_name ? prob->problem_name : "Problema Simplex"
     );
 
-    /* ========== PROBLEM STATEMENT ========== */
+    /* ======== Problem formulation ======== */
     fputs("\\section*{Planteamiento del Problema}\n", f);
     fprintf(f, "%s \\[ Z = ",
             prob->sense == SIMPLEX_MAXIMIZE ? "Maximizar" : "Minimizar");
@@ -777,12 +856,13 @@ int simplex_write_latex_report(const char *tex_path,
                     (prob->var_names && prob->var_names[j])
                         ? prob->var_names[j]
                         : "x");
+            fprintf(f, "\n");
         }
         fprintf(f, "\\le %.3f\\\\\n", prob->b[i]);
     }
     fputs("x_i \\ge 0 \\text{ para todo } i.\\]\n", f);
 
-    /* ========== SIMPLEX METHOD DESCRIPTION ========== */
+    /* ======== Description ======== */
     fputs("\\section*{Descripci\\'on del M\\'etodo S\\'implex}\n", f);
     fputs("El algoritmo S\\'implex, propuesto por George Dantzig en 1947, "
           "es un procedimiento iterativo que explora los v\\'ertices del poliedro factible "
@@ -790,15 +870,16 @@ int simplex_write_latex_report(const char *tex_path,
           "En cada iteraci\\'on se determina una variable que entra a la base y otra que sale, "
           "hasta que no existen mejoras posibles en la funci\\'on objetivo.\\\\[1em]\n", f);
 
-    /* ========== SIMPLEX TABLES ========== */
+    /* ======== Tables ======== */
     fputs("\\section*{Tablas del M\\'etodo S\\'implex}\n", f);
     for (int k = 0; k < trace->count; ++k)
         tex_write_table_step(f, &trace->steps[k], prob->n, prob->m);
 
-    /* ========== RESULTS ========== */
+    /* ======== Results ======== */
     fputs("\\section*{Resultados y Casos Especiales}\n", f);
     fprintf(f, "Estado del problema: \\textbf{%s}.\\\\\n",
             simplex_status_str(res->status));
+
     if (res->status == SIMPLEX_OK || res->status == SIMPLEX_MULTIPLE) {
         fprintf(f, "Valor \\textit{\\'optimo}: $Z^* = %.6f$.\\\\[4pt]\n", res->z);
         fputs("Soluci\\'on \\textit{\\'optima}:\\\\[4pt]\n", f);
@@ -827,11 +908,28 @@ int simplex_write_latex_report(const char *tex_path,
     else if (res->status == SIMPLEX_ITER_LIMIT)
         fputs("\\textbf{L\\'{\\i}mite de iteraciones alcanzado.} Se recomienda aumentar el l\\'{\\i}mite o revisar la degeneraci\\'on.\\\\\n", f);
 
-    /* ========== FOOTER ========== */
+    /* ======== Footer ======== */
     fputs("\\vfill\\smallskip\\noindent Documento generado autom\\'aticamente por "
           "\\texttt{simplex\\_report.c}.\\\\\n", f);
     fputs("\\end{document}\n", f);
 
     fclose(f);
+
+    /* ======== Compile LaTeX into PDF ======== */
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd),
+             "cd \"%s\" && pdflatex -interaction=nonstopmode -halt-on-error reporte_simplex.tex > /dev/null 2>&1",
+             folder);
+    system(cmd);
+
+    /* ======== Open PDF in Evince ======== */
+    if (access(pdf_path, F_OK) == 0) {
+        snprintf(cmd, sizeof(cmd),
+                 "evince --presentation \"%s\" &", pdf_path);
+        system(cmd);
+    } else {
+        fprintf(stderr, "Error: PDF file not generated in folder %s\n", folder);
+    }
+
     return 0;
 }

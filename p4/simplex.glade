@@ -81,6 +81,16 @@
               <object class="GtkButton" id="btn_solve"><property name="label">Solve</property></object>
               <packing><property name="left-attach">3</property><property name="top-attach">2</property></packing>
             </child>
+            <child>
+  <object class="GtkButton" id="btn_save">
+    <property name="label">Guardar</property>
+  </object>
+</child>
+<child>
+  <object class="GtkButton" id="btn_load">
+    <property name="label">Cargar</property>
+  </object>
+</child>
 
             <child>
               <object class="GtkCheckButton" id="check_show_steps">
