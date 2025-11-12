@@ -77,7 +77,7 @@ static void on_generate_clicked(GtkButton *btn, gpointer user_data) {
     n_cons = (txt_m && *txt_m) ? atoi(txt_m) : 0;
 
     if (n_vars < 2 || n_vars > 15 || n_cons < 2 || n_cons > 15) {
-        show_error("Variables and constraints must be between 2 and 15.");
+        show_error("Las variables y restricciones deben ser entre 2 y 15");
         return;
     }
 
@@ -144,7 +144,7 @@ static void on_generate_clicked(GtkButton *btn, gpointer user_data) {
 // ------------------------------------------------------------
 static void on_solve_clicked(GtkButton *btn, gpointer user_data) {
     if (n_vars == 0 || n_cons == 0) {
-        show_error("Please enter and generate fields first.");
+        show_error("Debe ingresar y generar los campos primero");
         return;
     }
 
