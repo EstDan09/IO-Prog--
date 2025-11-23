@@ -1,0 +1,144 @@
+\documentclass[11pt]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,colortbl}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{hyperref,graphicx}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Huge Proyecto 4 - Otro S\'implex M\'as}\\[1em]
+{\Large Dakota}\\[2em]
+{\large Curso: Investigaci\'on de Operaciones\\Semestre: 2025-I}\\[4em]
+\vfill
+\textbf{Esteban Secaida - Fabian Bustos}\\[2em]
+Fecha: \today
+\end{titlepage}
+\newpage
+\section*{Planteamiento del Problema}
+Maximizar \[ Z = 60,000Escritorios +30,000Mesas +20,000Sillas \]
+Sujeto a:\[ 
+8,000Escritorios 
++6,000Mesas 
++1,000Sillas 
+\le 48,000\\
+4,000Escritorios 
++2,000Mesas 
++1,000Sillas 
+\le 20,000\\
+2,000Escritorios 
++1,000Mesas 
++0,000Sillas 
+\le 8,000\\
+0,000Escritorios 
++1,000Mesas 
++0,000Sillas 
+\le 5,000\\
+x_i \ge 0 \text{ para todo } i.\]
+\section*{Descripci\'on del M\'etodo S\'implex}
+El algoritmo S\'implex, propuesto por George Dantzig en 1947, es un procedimiento iterativo que explora los v\'ertices del poliedro factible para encontrar la soluci\'on \textit{\'optima} de un problema lineal. En cada iteraci\'on se determina una variable que entra a la base y otra que sale, hasta que no existen mejoras posibles en la funci\'on objetivo.\\[1em]
+\section*{Tablas del M\'etodo S\'implex}
+\begin{table}[h]
+\centering
+\caption{Tabla inicial.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $s_{4}$ & $b$ \\
+\midrule
+$Z$ & -60,000000 & -30,000000 & -20,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 \\
+$R_{1}$ & 8,000000 & 6,000000 & 1,000000 & 1,000000 & 0,000000 & 0,000000 & 0,000000 & 48,000000 \\
+$R_{2}$ & 4,000000 & 2,000000 & 1,000000 & 0,000000 & 1,000000 & 0,000000 & 0,000000 & 20,000000 \\
+$R_{3}$ & 2,000000 & 1,000000 & 0,000000 & 0,000000 & 0,000000 & 1,000000 & 0,000000 & 8,000000 \\
+$R_{4}$ & 0,000000 & 1,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 & 1,000000 & 5,000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Iteraci\'on 1: entra la columna $x_{1}$ y sale la fila $R_{3}$.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $s_{4}$ & $b$ \\
+\midrule
+$Z$ & \cellcolor{blue!12}-60,000000 & -30,000000 & -20,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 \\
+$R_{1}$ & \cellcolor{blue!12}8,000000 & 6,000000 & 1,000000 & 1,000000 & 0,000000 & 0,000000 & 0,000000 & 48,000000 \\
+$R_{2}$ & \cellcolor{blue!12}4,000000 & 2,000000 & 1,000000 & 0,000000 & 1,000000 & 0,000000 & 0,000000 & 20,000000 \\
+$R_{3}$ & \cellcolor{orange!35}2,000000 & \cellcolor{green!12}1,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}1,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}8,000000 \\
+$R_{4}$ & \cellcolor{blue!12}0,000000 & 1,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 & 1,000000 & 5,000000 \\
+\bottomrule
+\end{tabular}
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{1}$:\\
+$R_{1} = 6,000000$,\ $R_{2} = 5,000000$,\ $R_{3} = 4,000000$ \;\;\textbf{(m\'inima)},\ .
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Iteraci\'on 2: entra la columna $x_{3}$ y sale la fila $R_{2}$.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $s_{4}$ & $b$ \\
+\midrule
+$Z$ & 0,000000 & 0,000000 & \cellcolor{blue!12}-20,000000 & 0,000000 & 0,000000 & 30,000000 & 0,000000 & 240,000000 \\
+$R_{1}$ & 0,000000 & 2,000000 & \cellcolor{blue!12}1,000000 & 1,000000 & 0,000000 & -4,000000 & 0,000000 & 16,000000 \\
+$R_{2}$ & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{orange!35}1,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}1,000000 & \cellcolor{green!12}-2,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}4,000000 \\
+$R_{3}$ & 1,000000 & 0,500000 & \cellcolor{blue!12}0,000000 & 0,000000 & 0,000000 & 0,500000 & 0,000000 & 4,000000 \\
+$R_{4}$ & 0,000000 & 1,000000 & \cellcolor{blue!12}0,000000 & 0,000000 & 0,000000 & 0,000000 & 1,000000 & 5,000000 \\
+\bottomrule
+\end{tabular}
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{3}$:\\
+$R_{1} = 16,000000$,\ $R_{2} = 4,000000$ \;\;\textbf{(m\'inima)},\ .
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Iteraci\'on 3: entra la columna $s_{3}$ y sale la fila $R_{3}$.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $s_{4}$ & $b$ \\
+\midrule
+$Z$ & 0,000000 & 0,000000 & 0,000000 & 0,000000 & 20,000000 & \cellcolor{blue!12}-10,000000 & 0,000000 & 320,000000 \\
+$R_{1}$ & 0,000000 & 2,000000 & 0,000000 & 1,000000 & -1,000000 & \cellcolor{blue!12}-2,000000 & 0,000000 & 12,000000 \\
+$R_{2}$ & 0,000000 & 0,000000 & 1,000000 & 0,000000 & 1,000000 & \cellcolor{blue!12}-2,000000 & 0,000000 & 4,000000 \\
+$R_{3}$ & \cellcolor{green!12}1,000000 & \cellcolor{green!12}0,500000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{orange!35}0,500000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}4,000000 \\
+$R_{4}$ & 0,000000 & 1,000000 & 0,000000 & 0,000000 & 0,000000 & \cellcolor{blue!12}0,000000 & 1,000000 & 5,000000 \\
+\bottomrule
+\end{tabular}
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $s_{3}$:\\
+$R_{3} = 8,000000$ \;\;\textbf{(m\'inima)},\ .
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Tabla final.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $s_{4}$ & $b$ \\
+\midrule
+$Z$ & 20,000000 & 10,000000 & 0,000000 & 0,000000 & 20,000000 & 0,000000 & 0,000000 & 400,000000 \\
+$R_{1}$ & 4,000000 & 4,000000 & 0,000000 & 1,000000 & -1,000000 & 0,000000 & 0,000000 & 28,000000 \\
+$R_{2}$ & 4,000000 & 2,000000 & 1,000000 & 0,000000 & 1,000000 & 0,000000 & 0,000000 & 20,000000 \\
+$R_{3}$ & 2,000000 & 1,000000 & 0,000000 & 0,000000 & 0,000000 & 1,000000 & 0,000000 & 8,000000 \\
+$R_{4}$ & 0,000000 & 1,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 & 1,000000 & 5,000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Resultados y Casos Especiales}
+Estado del problema: \textbf{Óptimo}.\\
+Valor \textit{\'optimo}: $Z^* = 400,000000$.\\[4pt]
+Soluci\'on \textit{\'optima}:\\[4pt]
+\[ Escritorios = 0,000000,\;Mesas = 0,000000,\;Sillas = 20,000000. \]
+\vfill\smallskip\noindent Documento generado por Otro Simplex mas, de Esteban Secaida y Fabi\'an Bustos \end{document}

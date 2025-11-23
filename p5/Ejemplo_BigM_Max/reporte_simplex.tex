@@ -1,0 +1,121 @@
+\documentclass[11pt]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,colortbl}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{hyperref,graphicx}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Huge Proyecto 4 - Otro S\'implex M\'as}\\[1em]
+{\Large Ejemplo_BigM_Max}\\[2em]
+{\large Curso: Investigaci\'on de Operaciones\\Semestre: 2025-I}\\[4em]
+\vfill
+\textbf{Esteban Secaida - Fabian Bustos}\\[2em]
+Fecha: \today
+\end{titlepage}
+\newpage
+\section*{Planteamiento del Problema}
+Maximizar \[ Z = 3.000x_1 +2.000x_2 \]
+Sujeto a:\[ 
+1.000x_1 +1.000x_2 \le 4.000\\
+1.000x_1 +2.000x_2 \ge 4.000\\
+x_i \ge 0 \text{ para todo } i.\]
+\section*{Descripci\'on del M\'etodo S\'implex}
+El algoritmo S\'implex, propuesto por George Dantzig en 1947, es un procedimiento iterativo que explora los v\'ertices del poliedro factible para encontrar la soluci\'on \textit{\'optima} de un problema lineal. En cada iteraci\'on se determina una variable que entra a la base y otra que sale, hasta que no existen mejoras posibles en la funci\'on objetivo.\\[1em]
+\section*{Tablas del M\'etodo S\'implex}
+\begin{table}[h]
+\centering
+\caption{Tabla inicial.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $b$ \\
+\midrule
+$Z$ & -1000003.000000 & -2000002.000000 & 0.000000 & 1000000.000000 & 0.000000 & -4000000.000000 \\
+$R_{1}$ & 1.000000 & 1.000000 & 1.000000 & 0.000000 & 0.000000 & 4.000000 \\
+$R_{2}$ & 1.000000 & 2.000000 & 0.000000 & -1.000000 & 1.000000 & 4.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Iteraci\'on 1: entra la columna $x_{2}$ y sale la fila $R_{2}$.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $b$ \\
+\midrule
+$Z$ & -1000003.000000 & \cellcolor{blue!12}-2000002.000000 & 0.000000 & 1000000.000000 & 0.000000 & -4000000.000000 \\
+$R_{1}$ & 1.000000 & \cellcolor{blue!12}1.000000 & 1.000000 & 0.000000 & 0.000000 & 4.000000 \\
+$R_{2}$ & \cellcolor{green!12}1.000000 & \cellcolor{orange!35}2.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}-1.000000 & \cellcolor{green!12}1.000000 & \cellcolor{green!12}4.000000 \\
+\bottomrule
+\end{tabular}
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{2}$:\\
+$R_{1} = 4.000000$,\ $R_{2} = 2.000000$ \;\;\textbf{(m\'inima)}.
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Iteraci\'on 2: entra la columna $x_{1}$ y sale la fila $R_{2}$.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $b$ \\
+\midrule
+$Z$ & \cellcolor{blue!12}-2.000000 & 0.000000 & 0.000000 & -1.000000 & 1000001.000000 & 4.000000 \\
+$R_{1}$ & \cellcolor{blue!12}0.500000 & 0.000000 & 1.000000 & 0.500000 & -0.500000 & 2.000000 \\
+$R_{2}$ & \cellcolor{orange!35}0.500000 & \cellcolor{green!12}1.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}-0.500000 & \cellcolor{green!12}0.500000 & \cellcolor{green!12}2.000000 \\
+\bottomrule
+\end{tabular}
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{1}$:\\
+$R_{1} = 4.000000$,\ $R_{2} = 4.000000$ \;\;\textbf{(m\'inima)}.
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Iteraci\'on 3: entra la columna $s_{2}$ y sale la fila $R_{1}$.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $b$ \\
+\midrule
+$Z$ & 0.000000 & 4.000000 & 0.000000 & \cellcolor{blue!12}-3.000000 & 1000003.000000 & 12.000000 \\
+$R_{1}$ & \cellcolor{green!12}0.000000 & \cellcolor{green!12}-1.000000 & \cellcolor{green!12}1.000000 & \cellcolor{orange!35}1.000000 & \cellcolor{green!12}-1.000000 & \cellcolor{green!12}0.000000 \\
+$R_{2}$ & 1.000000 & 2.000000 & 0.000000 & \cellcolor{blue!12}-1.000000 & 1.000000 & 4.000000 \\
+\bottomrule
+\end{tabular}
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $s_{2}$:\\
+$R_{1} = 0.000000$ \;\;\textbf{(m\'inima)},\ .
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Tabla final.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+ & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $b$ \\
+\midrule
+$Z$ & 0.000000 & 1.000000 & 3.000000 & 0.000000 & 1000000.000000 & 12.000000 \\
+$R_{1}$ & 0.000000 & -1.000000 & 1.000000 & 1.000000 & -1.000000 & 0.000000 \\
+$R_{2}$ & 1.000000 & 1.000000 & 1.000000 & 0.000000 & 0.000000 & 4.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Resultados y Casos Especiales}
+Estado del problema: \textbf{Óptimo}.\\
+Valor \textit{\'optimo}: $Z^* = 12.000000$.\\[4pt]
+Soluci\'on \textit{\'optima}:\\[4pt]
+\[ x_1 = 4.000000,\;x_2 = 0.000000. \]
+\emph{Nota:} Se detect\'o degeneraci\'on (al menos un ratio m\'inimo fue 0). Se aplic\'o la regla de Bland para evitar ciclos.\\[6pt]
+\vfill\smallskip\noindent Documento generado por Otro Simplex mas, de Esteban Secaida y Fabi\'an Bustos \end{document}
