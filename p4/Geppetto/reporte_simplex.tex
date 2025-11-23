@@ -18,17 +18,17 @@ Fecha: \today
 \end{titlepage}
 \newpage
 \section*{Planteamiento del Problema}
-Maximizar \[ Z = 3.000Soldado +2.000Tren \]
+Maximizar \[ Z = 3,000Soldado +2,000Tren \]
 Sujeto a:\[ 
-2.000Soldado 
-+1.000Tren 
-\le 100.000\\
-1.000Soldado 
-+1.000Tren 
-\le 80.000\\
-1.000Soldado 
-+0.000Tren 
-\le 40.000\\
+2,000Soldado 
++1,000Tren 
+\le 100,000\\
+1,000Soldado 
++1,000Tren 
+\le 80,000\\
+1,000Soldado 
++0,000Tren 
+\le 40,000\\
 x_i \ge 0 \text{ para todo } i.\]
 \section*{Descripci\'on del M\'etodo S\'implex}
 El algoritmo S\'implex, propuesto por George Dantzig en 1947, es un procedimiento iterativo que explora los v\'ertices del poliedro factible para encontrar la soluci\'on \textit{\'optima} de un problema lineal. En cada iteraci\'on se determina una variable que entra a la base y otra que sale, hasta que no existen mejoras posibles en la funci\'on objetivo.\\[1em]
@@ -42,10 +42,10 @@ El algoritmo S\'implex, propuesto por George Dantzig en 1947, es un procedimient
 \toprule
  & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
 \midrule
-$Z$ & -3.000000 & -2.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 \\
-$R_{1}$ & 2.000000 & 1.000000 & 1.000000 & 0.000000 & 0.000000 & 100.000000 \\
-$R_{2}$ & 1.000000 & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 80.000000 \\
-$R_{3}$ & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 1.000000 & 40.000000 \\
+$Z$ & -3,000000 & -2,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 \\
+$R_{1}$ & 2,000000 & 1,000000 & 1,000000 & 0,000000 & 0,000000 & 100,000000 \\
+$R_{2}$ & 1,000000 & 1,000000 & 0,000000 & 1,000000 & 0,000000 & 80,000000 \\
+$R_{3}$ & 1,000000 & 0,000000 & 0,000000 & 0,000000 & 1,000000 & 40,000000 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -59,14 +59,14 @@ $R_{3}$ & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 1.000000 & 40.000000 \\
 \toprule
  & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
 \midrule
-$Z$ & \cellcolor{blue!12}-3.000000 & -2.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 \\
-$R_{1}$ & \cellcolor{blue!12}2.000000 & 1.000000 & 1.000000 & 0.000000 & 0.000000 & 100.000000 \\
-$R_{2}$ & \cellcolor{blue!12}1.000000 & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 80.000000 \\
-$R_{3}$ & \cellcolor{orange!35}1.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}1.000000 & \cellcolor{green!12}40.000000 \\
+$Z$ & \cellcolor{blue!12}-3,000000 & -2,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 \\
+$R_{1}$ & \cellcolor{blue!12}2,000000 & 1,000000 & 1,000000 & 0,000000 & 0,000000 & 100,000000 \\
+$R_{2}$ & \cellcolor{blue!12}1,000000 & 1,000000 & 0,000000 & 1,000000 & 0,000000 & 80,000000 \\
+$R_{3}$ & \cellcolor{orange!35}1,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}1,000000 & \cellcolor{green!12}40,000000 \\
 \bottomrule
 \end{tabular}
 \\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{1}$:\\
-$R_{1} = 50.000000$,\ $R_{2} = 80.000000$,\ $R_{3} = 40.000000$ \;\;\textbf{(m\'inima)}.
+$R_{1} = 50,000000$,\ $R_{2} = 80,000000$,\ $R_{3} = 40,000000$ \;\;\textbf{(m\'inima)}.
 \end{table}
 
 \begin{table}[h]
@@ -78,14 +78,14 @@ $R_{1} = 50.000000$,\ $R_{2} = 80.000000$,\ $R_{3} = 40.000000$ \;\;\textbf{(m\'
 \toprule
  & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
 \midrule
-$Z$ & 0.000000 & \cellcolor{blue!12}-2.000000 & 0.000000 & 0.000000 & 3.000000 & 120.000000 \\
-$R_{1}$ & \cellcolor{green!12}0.000000 & \cellcolor{orange!35}1.000000 & \cellcolor{green!12}1.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}-2.000000 & \cellcolor{green!12}20.000000 \\
-$R_{2}$ & 0.000000 & \cellcolor{blue!12}1.000000 & 0.000000 & 1.000000 & -1.000000 & 40.000000 \\
-$R_{3}$ & 1.000000 & \cellcolor{blue!12}0.000000 & 0.000000 & 0.000000 & 1.000000 & 40.000000 \\
+$Z$ & 0,000000 & \cellcolor{blue!12}-2,000000 & 0,000000 & 0,000000 & 3,000000 & 120,000000 \\
+$R_{1}$ & \cellcolor{green!12}0,000000 & \cellcolor{orange!35}1,000000 & \cellcolor{green!12}1,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}-2,000000 & \cellcolor{green!12}20,000000 \\
+$R_{2}$ & 0,000000 & \cellcolor{blue!12}1,000000 & 0,000000 & 1,000000 & -1,000000 & 40,000000 \\
+$R_{3}$ & 1,000000 & \cellcolor{blue!12}0,000000 & 0,000000 & 0,000000 & 1,000000 & 40,000000 \\
 \bottomrule
 \end{tabular}
 \\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{2}$:\\
-$R_{1} = 20.000000$ \;\;\textbf{(m\'inima)},\ $R_{2} = 40.000000$,\ .
+$R_{1} = 20,000000$ \;\;\textbf{(m\'inima)},\ $R_{2} = 40,000000$,\ .
 \end{table}
 
 \begin{table}[h]
@@ -97,14 +97,14 @@ $R_{1} = 20.000000$ \;\;\textbf{(m\'inima)},\ $R_{2} = 40.000000$,\ .
 \toprule
  & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
 \midrule
-$Z$ & 0.000000 & 0.000000 & 2.000000 & 0.000000 & \cellcolor{blue!12}-1.000000 & 160.000000 \\
-$R_{1}$ & 0.000000 & 1.000000 & 1.000000 & 0.000000 & \cellcolor{blue!12}-2.000000 & 20.000000 \\
-$R_{2}$ & \cellcolor{green!12}0.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}-1.000000 & \cellcolor{green!12}1.000000 & \cellcolor{orange!35}1.000000 & \cellcolor{green!12}20.000000 \\
-$R_{3}$ & 1.000000 & 0.000000 & 0.000000 & 0.000000 & \cellcolor{blue!12}1.000000 & 40.000000 \\
+$Z$ & 0,000000 & 0,000000 & 2,000000 & 0,000000 & \cellcolor{blue!12}-1,000000 & 160,000000 \\
+$R_{1}$ & 0,000000 & 1,000000 & 1,000000 & 0,000000 & \cellcolor{blue!12}-2,000000 & 20,000000 \\
+$R_{2}$ & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}-1,000000 & \cellcolor{green!12}1,000000 & \cellcolor{orange!35}1,000000 & \cellcolor{green!12}20,000000 \\
+$R_{3}$ & 1,000000 & 0,000000 & 0,000000 & 0,000000 & \cellcolor{blue!12}1,000000 & 40,000000 \\
 \bottomrule
 \end{tabular}
 \\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $s_{3}$:\\
-$R_{2} = 20.000000$ \;\;\textbf{(m\'inima)},\ $R_{3} = 40.000000$.
+$R_{2} = 20,000000$ \;\;\textbf{(m\'inima)},\ $R_{3} = 40,000000$.
 \end{table}
 
 \begin{table}[h]
@@ -116,18 +116,17 @@ $R_{2} = 20.000000$ \;\;\textbf{(m\'inima)},\ $R_{3} = 40.000000$.
 \toprule
  & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
 \midrule
-$Z$ & 0.000000 & 0.000000 & 1.000000 & 1.000000 & 0.000000 & 180.000000 \\
-$R_{1}$ & 0.000000 & 1.000000 & -1.000000 & 2.000000 & 0.000000 & 60.000000 \\
-$R_{2}$ & 0.000000 & 0.000000 & -1.000000 & 1.000000 & 1.000000 & 20.000000 \\
-$R_{3}$ & 1.000000 & 0.000000 & 1.000000 & -1.000000 & 0.000000 & 20.000000 \\
+$Z$ & 0,000000 & 0,000000 & 1,000000 & 1,000000 & 0,000000 & 180,000000 \\
+$R_{1}$ & 0,000000 & 1,000000 & -1,000000 & 2,000000 & 0,000000 & 60,000000 \\
+$R_{2}$ & 0,000000 & 0,000000 & -1,000000 & 1,000000 & 1,000000 & 20,000000 \\
+$R_{3}$ & 1,000000 & 0,000000 & 1,000000 & -1,000000 & 0,000000 & 20,000000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \section*{Resultados y Casos Especiales}
 Estado del problema: \textbf{Óptimo}.\\
-Valor \textit{\'optimo}: $Z^* = 180.000000$.\\[4pt]
+Valor \textit{\'optimo}: $Z^* = 180,000000$.\\[4pt]
 Soluci\'on \textit{\'optima}:\\[4pt]
-\[ Soldado = 20.000000,\;Tren = 60.000000. \]
-\vfill\smallskip\noindent Documento generado autom\'aticamente por \texttt{simplex\_report.c}.\\
-\end{document}
+\[ Soldado = 20,000000,\;Tren = 60,000000. \]
+\vfill\smallskip\noindent Documento generado por Otro Simplex mas, de Esteban Secaida y Fabi\'an Bustos \end{document}

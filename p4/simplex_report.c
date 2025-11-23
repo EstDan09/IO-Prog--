@@ -909,8 +909,8 @@ int simplex_write_latex_report(const char *base_name,
         fputs("\\textbf{L\\'{\\i}mite de iteraciones alcanzado.} Se recomienda aumentar el l\\'{\\i}mite o revisar la degeneraci\\'on.\\\\\n", f);
 
     /* ======== Footer ======== */
-    fputs("\\vfill\\smallskip\\noindent Documento generado autom\\'aticamente por "
-          "\\texttt{simplex\\_report.c}.\\\\\n", f);
+    fputs("\\vfill\\smallskip\\noindent Documento generado por Otro Simplex mas, de Esteban Secaida y Fabi\\'an Bustos "
+          , f);
     fputs("\\end{document}\n", f);
 
     fclose(f);

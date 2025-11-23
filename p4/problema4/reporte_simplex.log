@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.8.24)  12 NOV 2025 12:58
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.8.24)  12 NOV 2025 13:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -385,10 +385,7 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count296
 \l__pdf_internal_box=\box55
 )
-(./reporte_simplex.aux
-LaTeX Info: Redefining \. on input line 11.
-LaTeX Info: Redefining \% on input line 11.
-)
+No file reporte_simplex.aux.
 \openout1 = `reporte_simplex.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
@@ -411,7 +408,6 @@ LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 9.
 LaTeX Font Info:    ... okay on input line 9.
 LaTeX Info: Redefining \. on input line 9.
 LaTeX Info: Redefining \% on input line 9.
-
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -469,18 +465,18 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 Package hyperref Info: Link coloring OFF on input line 9.
-
-(./reporte_simplex.out) (./reporte_simplex.out)
 \@outlinefile=\write3
 \openout3 = `reporte_simplex.out'.
 
- [1
+
+[1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/
 dvips/cm-super/cm-super-t1.enc}]
 LaTeX Font Info:    Trying to load font information for U+msa on input line 21.
 
- (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
 LaTeX Font Info:    Trying to load font information for U+msb on input line 21.
@@ -489,70 +485,33 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 21.
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Overfull \hbox (656.69237pt too wide) detected at line 39
-\OT1/cmr/m/n/10.95 8\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/1
-0.95 Escritorios \OT1/cmr/m/n/10.95 + 6\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95
- 000\OML/cmm/m/it/10.95 Mesas \OT1/cmr/m/n/10.95 + 1\OML/cmm/m/it/10.95 ; \OT1/
-cmr/m/n/10.95 000\OML/cmm/m/it/10.95 Sillas \OMS/cmsy/m/n/10.95 ^^T \OT1/cmr/m/
-n/10.95 48\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000[] 4\OML/cmm/m/it/10.95 ;
- \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/10.95 Escritorios \OT1/cmr/m/n/10.95 + 2\O
-ML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/10.95 Mesas \OT1/cmr/m/
-n/10.95 + 1\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/10.95 Sill
-as \OMS/cmsy/m/n/10.95 ^^T \OT1/cmr/m/n/10.95 20\OML/cmm/m/it/10.95 ; \OT1/cmr/
-m/n/10.95 000[] 2\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/10.9
-5 Escritorios \OT1/cmr/m/n/10.95 + 1\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 00
-0\OML/cmm/m/it/10.95 Mesas \OT1/cmr/m/n/10.95 + 0\OML/cmm/m/it/10.95 ; \OT1/cmr
-/m/n/10.95 000\OML/cmm/m/it/10.95 Sillas \OMS/cmsy/m/n/10.95 ^^T \OT1/cmr/m/n/1
-0.95 8\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000[] 0\OML/cmm/m/it/10.95 ; \OT
-1/cmr/m/n/10.95 000\OML/cmm/m/it/10.95 Escritorios \OT1/cmr/m/n/10.95 + 1\OML/c
-mm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/10.95 Mesas \OT1/cmr/m/n/10
-.95 + 0\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/10.95 Sillas \
-OMS/cmsy/m/n/10.95 ^^T \OT1/cmr/m/n/10.95 5\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/1
-0.95 000[] \OML/cmm/m/it/10.95 x[] \OMS/cmsy/m/n/10.95 ^^U \OT1/cmr/m/n/10.95 0
-[]\OML/cmm/m/it/10.95 i:
+Overfull \hbox (5.01115pt too wide) detected at line 32
+\OT1/cmr/m/n/10.95 4\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/1
+0.95 x[] \OT1/cmr/m/n/10.95 + 2\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\OML
+/cmm/m/it/10.95 x[] \OMS/cmsy/m/n/10.95 ^^T \OT1/cmr/m/n/10.95 12\OML/cmm/m/it/
+10.95 ; \OT1/cmr/m/n/10.95 000[] 4\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000\
+OML/cmm/m/it/10.95 x[] \OT1/cmr/m/n/10.95 + 1\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n
+/10.95 000\OML/cmm/m/it/10.95 x[] \OMS/cmsy/m/n/10.95 ^^T \OT1/cmr/m/n/10.95 10
+\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000[] 1\OML/cmm/m/it/10.95 ; \OT1/cmr/
+m/n/10.95 000\OML/cmm/m/it/10.95 x[] \OT1/cmr/m/n/10.95 + 1\OML/cmm/m/it/10.95 
+; \OT1/cmr/m/n/10.95 000\OML/cmm/m/it/10.95 x[] \OMS/cmsy/m/n/10.95 ^^T \OT1/cm
+r/m/n/10.95 4\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 000[] \OML/cmm/m/it/10.95
+ x[] \OMS/cmsy/m/n/10.95 ^^U \OT1/cmr/m/n/10.95 0[]\OML/cmm/m/it/10.95 i:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 41--42
+Underfull \hbox (badness 10000) in paragraph at lines 34--35
 
- []
-
-
-Overfull \hbox (10.48503pt too wide) in paragraph at lines 48--59
- [][] 
- []
-
-
-Overfull \hbox (10.48503pt too wide) in paragraph at lines 66--77
- [][] 
- []
-
-
-Overfull \hbox (3.22395pt too wide) in paragraph at lines 86--97
- [][] 
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (3.22395pt too wide) in paragraph at lines 106--117
- [][] 
- []
-
-
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (5.03735pt too wide) in paragraph at lines 126--137
- [][] 
- []
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 140--143
+Underfull \hbox (badness 10000) in paragraph at lines 128--131
 
  []
 
@@ -561,9 +520,13 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.144 ... Secaida y Fabi\'an Bustos \end{document}
-                                                   [1] [2]
-(./reporte_simplex.aux
+l.131 \[
+         x_1 = 2,000000,\;x_2 = 2,000000. \] [1]
+Underfull \hbox (badness 10000) in paragraph at lines 131--133
+
+ []
+
+[2] (./reporte_simplex.aux
 LaTeX Info: Redefining \. on input line 11.
 LaTeX Info: Redefining \% on input line 11.
 )
@@ -571,14 +534,21 @@ LaTeX Info: Redefining \% on input line 11.
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
-Package rerunfilecheck Info: File `reporte_simplex.out' has not changed.
-(rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
+
+
+Package rerunfilecheck Warning: File `reporte_simplex.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `reporte_simplex.out':
+(rerunfilecheck)             Before: <no file>
+(rerunfilecheck)             After:  D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 12399 strings out of 474222
- 189002 string characters out of 5748733
- 1952975 words of memory out of 5000000
- 34479 multiletter control sequences out of 15000+600000
+ 12391 strings out of 474222
+ 188818 string characters out of 5748733
+ 1946975 words of memory out of 5000000
+ 34477 multiletter control sequences out of 15000+600000
  569567 words of font info for 63 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,11n,79p,405b,499s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -593,7 +563,7 @@ onts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf/fonts/type1/public/cm
 nts/type1/public/cm-super/sfrm1200.pfb></usr/share/texmf/fonts/type1/public/cm-
 super/sfrm1440.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm2488.pfb><
 /usr/share/texmf/fonts/type1/public/cm-super/sfti1095.pfb>
-Output written on reporte_simplex.pdf (3 pages, 179440 bytes).
+Output written on reporte_simplex.pdf (3 pages, 172100 bytes).
 PDF statistics:
  97 PDF objects out of 1000 (max. 8388607)
  65 compressed objects within 1 object stream
