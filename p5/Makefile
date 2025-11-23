@@ -4,7 +4,7 @@
 
 # Compiler and flags
 CC       := gcc
-CFLAGS   := $(shell pkg-config --cflags gtk+-3.0 json-c)
+CFLAGS   := -std=c11 -O2 $(shell pkg-config --cflags gtk+-3.0 json-c)
 LIBS     := $(shell pkg-config --libs gtk+-3.0 json-c) -lm
 
 # Files and output
@@ -23,7 +23,7 @@ $(BIN_DIR)/$(TARGET): $(SRC)
 	@mkdir -p $(BIN_DIR)
 	@echo "Compilando $(TARGET)..."
 	$(CC) $(SRC) -o $(BIN_DIR)/$(TARGET) $(CFLAGS) $(LIBS)
-	@echo "build completado. Executable: $(BIN_DIR)/$(TARGET)"
+	@echo "Build completado. Ejecutable: $(BIN_DIR)/$(TARGET)"
 
 # Run the program
 run: all
@@ -32,12 +32,13 @@ run: all
 # Debug build (adds -g for gdb)
 debug: CFLAGS += -g
 debug: clean all
-	@echo "debug listo"
+	@echo "Debug listo"
 
 # Clean compiled files
 clean:
-	@echo "clean build files"
+	@echo "Clean build files"
 	@rm -rf $(BIN_DIR)
 
 # Phony targets (not actual files)
 .PHONY: all run debug clean
+

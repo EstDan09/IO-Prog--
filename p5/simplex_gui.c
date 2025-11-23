@@ -23,7 +23,7 @@ static GtkWidget ***entries_A = NULL;      // [n_cons][n_vars]
 static GtkWidget **entries_c = NULL;       // [n_vars]
 static GtkWidget **entries_b = NULL;       // [n_cons]
 static GtkWidget **entries_varnames = NULL;// [n_vars]
-static GtkWidget **combo_ineq = NULL;      // [n_cons] (por ahora deshabilitados)
+static GtkWidget **combo_ineq = NULL;      // [n_cons]
 
 // ------------------------------------------------------------
 // Utility helpers
@@ -89,7 +89,7 @@ static void on_generate_clicked(GtkButton *btn, gpointer user_data) {
     clear_container(grid_constraints);
 
     // (No liberamos los punteros anteriores, fugas mínimas aceptables
-    //  para esta herramienta didáctica. Si quieres, luego hacemos free.)
+    //  para esta herramienta didáctica.)
 
     // Reservar nuevos punteros
     entries_varnames = g_new0(GtkWidget*, n_vars);
@@ -126,12 +126,13 @@ static void on_generate_clicked(GtkButton *btn, gpointer user_data) {
             gtk_grid_attach(GTK_GRID(grid_constraints), entries_A[i][j], j, i, 1, 1);
         }
 
+        // Ahora SÍ habilitamos el combo para seleccionar <=, =, >=
         combo_ineq[i] = gtk_combo_box_text_new();
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_ineq[i]), "≤");
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_ineq[i]), "=");
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_ineq[i]), "≥");
-        gtk_combo_box_set_active(GTK_COMBO_BOX(combo_ineq[i]), 0);
-        gtk_widget_set_sensitive(combo_ineq[i], FALSE);   // Proyecto 4: solo usamos ≤
+        gtk_combo_box_set_active(GTK_COMBO_BOX(combo_ineq[i]), 0); // por defecto ≤
+        gtk_widget_set_sensitive(combo_ineq[i], TRUE);
         gtk_grid_attach(GTK_GRID(grid_constraints), combo_ineq[i], n_vars, i, 1, 1);
 
         entries_b[i] = gtk_entry_new();
@@ -183,14 +184,26 @@ static void on_solve_clicked(GtkButton *btn, gpointer user_data) {
         ? SIMPLEX_MAXIMIZE
         : SIMPLEX_MINIMIZE;
 
-    SimplexProblem p = {0};
+    // Tipos de restricción para cada fila: <=, =, >=
+    ConstraintType *ctype = g_new0(ConstraintType, n_cons);
+    for (int i = 0; i < n_cons; ++i) {
+        int idx = gtk_combo_box_get_active(GTK_COMBO_BOX(combo_ineq[i]));
+        switch (idx) {
+            case 0:  ctype[i] = CONSTR_LEQ; break; // ≤
+            case 1:  ctype[i] = CONSTR_EQ;  break; // =
+            case 2:  ctype[i] = CONSTR_GEQ; break; // ≥
+            default: ctype[i] = CONSTR_LEQ; break;
+        }
+    }
+
+    SimplexProblem p = (SimplexProblem){0};
     p.n     = n_vars;
     p.m     = n_cons;
     p.sense = sense;
     p.c     = c;
     p.A     = A;
     p.b     = b;
-    p.ctype = NULL; // solo <=
+    p.ctype = ctype; // ahora usamos Big M si hay >= o =
 
     // Nombres de variables para LaTeX
     p.var_names = g_new0(char*, n_vars);
@@ -245,6 +258,7 @@ static void on_solve_clicked(GtkButton *btn, gpointer user_data) {
             g_free(p.var_names[j]);
         g_free(p.var_names);
     }
+    g_free(ctype);
     g_free(c);
     g_free(A);
     g_free(b);
@@ -321,6 +335,17 @@ static void on_save_clicked(GtkButton *btn, gpointer user_data)
         }
         json_object_object_add(root, "b", jb);
 
+        // tipos de restricción: leq / eq / geq
+        json_object *jctype = json_object_new_array();
+        for (int i = 0; i < n_cons; ++i) {
+            int idx = gtk_combo_box_get_active(GTK_COMBO_BOX(combo_ineq[i]));
+            const char *s = "leq";
+            if (idx == 1) s = "eq";
+            else if (idx == 2) s = "geq";
+            json_object_array_add(jctype, json_object_new_string(s));
+        }
+        json_object_object_add(root, "ctype", jctype);
+
         FILE *f = fopen(filename, "w");
         if (f) {
             fputs(json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY), f);
@@ -370,7 +395,7 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data)
             if (jm) gtk_entry_set_text(GTK_ENTRY(entry_num_constraints),
                                        json_object_get_string(jm));
 
-            // Reconstruir grillas
+            // Reconstruir grillas según n_vars y n_cons
             on_generate_clicked(NULL, NULL);
 
             json_object *name;
@@ -426,6 +451,23 @@ static void on_load_clicked(GtkButton *btn, gpointer user_data)
                     json_object *v = json_object_array_get_idx(jb, i);
                     gtk_entry_set_text(GTK_ENTRY(entries_b[i]),
                                        json_object_get_string(v));
+                }
+            }
+
+            // ctype: leq / eq / geq → set combos
+            json_object *jctype;
+            if (json_object_object_get_ex(root, "ctype", &jctype)) {
+                int len = json_object_array_length(jctype);
+                for (int i = 0; i < n_cons && i < len; ++i) {
+                    json_object *v = json_object_array_get_idx(jctype, i);
+                    const char *s = json_object_get_string(v);
+                    int idx = 0;
+                    if (s) {
+                        if (strcmp(s, "eq") == 0)  idx = 1;
+                        else if (strcmp(s, "geq") == 0) idx = 2;
+                        else idx = 0;
+                    }
+                    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_ineq[i]), idx);
                 }
             }
 
