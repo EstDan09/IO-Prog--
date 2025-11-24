@@ -499,6 +499,21 @@ int main(int argc, char **argv){
         g_error_free(err); 
         return 1;
     }
+    GtkCssProvider *css = gtk_css_provider_new();
+    GError *css_error = NULL;
+
+    gtk_css_provider_load_from_path(css, "style.css", &css_error);
+
+    if (css_error) {
+        g_printerr("Error cargando CSS: %s\n", css_error->message);
+        g_clear_error(&css_error);
+    }
+
+    gtk_style_context_add_provider_for_screen(
+        gdk_screen_get_default(),
+        GTK_STYLE_PROVIDER(css),
+        GTK_STYLE_PROVIDER_PRIORITY_USER
+    );
 
     win       = GTK_WIDGET(gtk_builder_get_object(builder, "knap_window"));
     btn_run   = GTK_WIDGET(gtk_builder_get_object(builder, "btn_run"));

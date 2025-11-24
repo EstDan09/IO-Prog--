@@ -1,0 +1,133 @@
+\documentclass[11pt]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,colortbl}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{hyperref,graphicx}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Huge Proyecto 4 - Otro S\'implex M\'as}\\[1em]
+{\Large jhkjh}\\[2em]
+{\large Curso: Investigaci\'on de Operaciones\\Semestre: 2025-I}\\[4em]
+\vfill
+\textbf{Esteban Secaida - Fabian Bustos}\\[2em]
+Fecha: \today
+\end{titlepage}
+\newpage
+\section*{Planteamiento del Problema}
+Maximizar \[ Z = 1.000x1 +1.000x2 \]
+Sujeto a:\[ 
+1.000x1 +0.000x2 \le 1.000\\
+1.000x1 +1.000x2 \le 1.000\\
+x_i \ge 0 \text{ para todo } i.\]
+\section*{Descripci\'on del M\'etodo S\'implex}
+El m\'etodo S\'implex, desarrollado por George Dantzig en 1947, es un algoritmo iterativo para resolver problemas de programaci\'on lineal en forma est\'andar. Su fundamento te\'orico radica en que, si el conjunto factible es un poliedro convexo y la funci\'on objetivo es lineal, entonces la soluci\'on \textit{\'optima} se alcanza necesariamente en uno de los v\'ertices del poliedro.\\[1em]
+El algoritmo parte de una soluci\'on b\'asica factible inicial, representada por una base de variables. En cada iteraci\'on, el S\'implex calcula los costos reducidos o indicadores de mejora para determinar qu\'e variable no b\'asica debe entrar a la base (variable entrante). Simult\'aneamente, se aplica la prueba de raz\'on m\'inima para identificar la variable que debe abandonar la base (variable saliente), garantizando la factibilidad de la soluci\'on.\\[1em]
+Tras actualizar la base y la tabla correspondiente, el proceso se repite hasta que todos los costos reducidos indican que no existen mejoras posibles en la funci\'on objetivo; en ese punto, la soluci\'on b\'asica actual es \textbf{\'optima}. En caso de que no exista variable saliente, el problema es no acotado. Si ninguna soluci\'on factible puede construirse desde el inicio, se declara el problema como infactible.\\[1em]
+El m\'etodo S\'implex es eficiente en la pr\'actica debido a que explora s\'olo una peque\~na fracci\'on de los v\'ertices del poliedro factible, y constituye uno de los algoritmos m\'as influyentes en optimizaci\'on matem\'atica y operaciones.\\[1em]
+\section*{Tablas del M\'etodo S\'implex}
+\begin{table}[h]
+\centering
+\caption{Tabla inicial.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $b$ \\
+\midrule
+$Z$ & -1.000000 & -1.000000 & 0.000000 & 0.000000 & 0.000000 \\
+$R_{1}$ & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 1.000000 \\
+$R_{2}$ & 1.000000 & 1.000000 & 0.000000 & 1.000000 & 1.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Iteraci\'on 1: entra la columna $x_{1}$ y sale la fila $R_{1}$.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $b$ \\
+\midrule
+$Z$ & \cellcolor{blue!12}-1.000000 & -1.000000 & 0.000000 & 0.000000 & 0.000000 \\
+$R_{1}$ & \cellcolor{orange!35}1.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}1.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}1.000000 \\
+$R_{2}$ & \cellcolor{blue!12}1.000000 & 1.000000 & 0.000000 & 1.000000 & 1.000000 \\
+\bottomrule
+\end{tabular}
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{1}$:\\
+$R_{1} = 1.000000$ \;\;\textbf{(m\'inima)},\ $R_{2} = 1.000000$.
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Iteraci\'on 2: entra la columna $x_{2}$ y sale la fila $R_{2}$.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $b$ \\
+\midrule
+$Z$ & 0.000000 & \cellcolor{blue!12}-1.000000 & 1.000000 & 0.000000 & 1.000000 \\
+$R_{1}$ & 1.000000 & \cellcolor{blue!12}0.000000 & 1.000000 & 0.000000 & 1.000000 \\
+$R_{2}$ & \cellcolor{green!12}0.000000 & \cellcolor{orange!35}1.000000 & \cellcolor{green!12}-1.000000 & \cellcolor{green!12}1.000000 & \cellcolor{green!12}0.000000 \\
+\bottomrule
+\end{tabular}
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{2}$:\\
+$R_{2} = 0.000000$ \;\;\textbf{(m\'inima)}.
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Tabla final.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $b$ \\
+\midrule
+$Z$ & 0.000000 & 0.000000 & 0.000000 & 1.000000 & 1.000000 \\
+$R_{1}$ & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 1.000000 \\
+$R_{2}$ & 0.000000 & 1.000000 & -1.000000 & 1.000000 & 0.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Resultados y Casos Especiales}
+Estado del problema: \textbf{Óptimo (múltiples soluciones)}.\\
+Valor \textit{\'optimo}: $Z^* = 1.000000$.\\[4pt]
+Soluci\'on \textit{\'optima}:\\[4pt]
+\[ x1 = 1.000000,\;x2 = 0.000000. \]
+\emph{Nota:} Se detect\'o degeneraci\'on (al menos un ratio m\'inimo fue 0). Se aplic\'o la regla de Bland para evitar ciclos.\\[6pt]
+El problema presenta \textbf{m\'ultiples soluciones \textit{\'optimas}}. Se puede obtener una familia de soluciones a lo largo de la recta de \textit{\'optimos}.\\[6pt]
+\subsection*{M\'ultiples soluciones}
+Se detect\'o una variable no b\'asica con costo reducido cero: $y_{1}$. Esto implica la existencia de un conjunto infinito de \'{o}ptimos.\\[4pt]
+Una parametrizaci\'on de la arista \'optima es:
+$$$y_{1}$ = t,\quad x_{B_i} = b_i - a_{i,3}\,t,\quad 0 \le t \le \theta,$$ tomando $\theta = 1.000000$ de las fracciones v\'alidas.\\[6pt]
+Punto 1: $t=0.250000$ \;$\Rightarrow$\; $x_{1}=0.750000$,\ $x_{2}=0.250000$.\\
+Punto 2: $t=0.500000$ \;$\Rightarrow$\; $x_{1}=0.500000$,\ $x_{2}=0.500000$.\\
+Punto 3: $t=0.750000$ \;$\Rightarrow$\; $x_{1}=0.250000$,\ $x_{2}=0.750000$.\\
+\paragraph{Tabla final alterna.}
+\begin{table}[h]
+\centering
+\caption{Tabla final.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrr}
+\toprule
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $b$ \\
+\midrule
+$Z$ & 0.000000 & 0.000000 & 0.000000 & 1.000000 & 1.000000 \\
+$R_{1}$ & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 1.000000 \\
+$R_{2}$ & 1.000000 & 1.000000 & 0.000000 & 1.000000 & 1.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Soluci\'on alterna b\'asica: $x_{1}=0.000000$,\ $x_{2}=1.000000$;\quad Z = 1.000000.\\
+
+\vfill\smallskip\noindent Documento generado por Otro Simplex mas, de Esteban Secaida y Fabi\'an Bustos \end{document}

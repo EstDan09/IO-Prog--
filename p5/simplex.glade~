@@ -52,6 +52,8 @@
               <object class="GtkEntry" id="entry_num_vars">
                 <property name="can-focus">True</property>
                 <property name="width-chars">4</property>
+                <property name="input-purpose">number</property>
+                <signal name="insert-text" handler="on_entry_numbers_insert_text" swapped="no"/>
               </object>
               <packing>
                 <property name="left-attach">1</property>
@@ -72,6 +74,8 @@
               <object class="GtkEntry" id="entry_num_constraints">
                 <property name="can-focus">True</property>
                 <property name="width-chars">4</property>
+                <property name="input-purpose">number</property>
+                <signal name="insert-text" handler="on_entry_numbers_insert_text" swapped="no"/>
               </object>
               <packing>
                 <property name="left-attach">3</property>
@@ -259,6 +263,7 @@
           <!-- n-columns=3 n-rows=3 -->
           <object class="GtkGrid" id="grid_objective">
             <property name="can-focus">False</property>
+            <property name="row-spacing">2</property>
             <property name="column-spacing">5</property>
             <child>
               <placeholder/>

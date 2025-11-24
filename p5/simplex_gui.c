@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <json-c/json.h>   // libjson-c-dev
 #include "simplex_report.h"
+#include <ctype.h>
 
 // === Widget references ===
 static GtkWidget *entry_problem_name;
@@ -28,6 +29,34 @@ static GtkWidget **combo_ineq = NULL;      // [n_cons]
 // ------------------------------------------------------------
 // Utility helpers
 // ------------------------------------------------------------
+// Callback to filter non-digit characters
+void on_entry_numbers_insert_text(GtkEditable *editable,
+                                  const gchar *text,
+                                  gint length,
+                                  gint *position,
+                                  gpointer user_data)
+{
+    gchar *filtered = g_new(gchar, length + 1);
+    int j = 0;
+
+    for (int i = 0; i < length; i++) {
+        if (g_ascii_isdigit(text[i])) {
+            filtered[j++] = text[i];
+        }
+        // else if (text[i] == '.') filtered[j++] = text[i];
+    }
+    filtered[j] = '\0';
+
+    if (j == 0) {
+        g_signal_stop_emission_by_name(editable, "insert-text");
+    } else if (j < length) {
+        g_signal_stop_emission_by_name(editable, "insert-text");
+        gtk_editable_insert_text(editable, filtered, j, position);
+    }
+
+    g_free(filtered);
+}
+
 static void show_error(const char *msg) {
     GtkWidget *dialog = gtk_message_dialog_new(
         NULL,
@@ -487,8 +516,23 @@ int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
 
     GtkBuilder *builder = gtk_builder_new_from_file("simplex.glade");
+    gtk_builder_connect_signals(builder, NULL);
     GtkWidget  *window  = GTK_WIDGET(gtk_builder_get_object(builder, "main_window"));
+    GtkCssProvider *css = gtk_css_provider_new();
+    GError *css_error = NULL;
 
+    gtk_css_provider_load_from_path(css, "style.css", &css_error);
+
+    if (css_error) {
+        g_printerr("Error cargando CSS: %s\n", css_error->message);
+        g_clear_error(&css_error);
+    }
+
+    gtk_style_context_add_provider_for_screen(
+        gdk_screen_get_default(),
+        GTK_STYLE_PROVIDER(css),
+        GTK_STYLE_PROVIDER_PRIORITY_USER
+    );
     entry_problem_name    = GTK_WIDGET(gtk_builder_get_object(builder, "entry_problem_name"));
     entry_num_vars        = GTK_WIDGET(gtk_builder_get_object(builder, "entry_num_vars"));
     entry_num_constraints = GTK_WIDGET(gtk_builder_get_object(builder, "entry_num_constraints"));
@@ -512,6 +556,42 @@ int main(int argc, char *argv[]) {
                      G_CALLBACK(on_save_clicked), NULL);
     g_signal_connect(btn_load, "clicked",
                      G_CALLBACK(on_load_clicked), NULL);
+
+    // Background class for main window
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(window),
+        "bg-pending"
+    );
+
+    // Option-style buttons
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(btn_generate),
+        "option"
+    );
+
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(btn_solve),
+        "option"
+    );
+
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(btn_save),
+        "option"
+    );
+
+    // btn_load already has ID #btn_load matched by CSS,
+    // but you *can* also add .option class if you want:
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(btn_load),
+        "option"
+    );
+// Source - https://stackoverflow.com/a
+// Posted by David Ranieri
+// Retrieved 2025-11-24, License - CC BY-SA 4.0
+
+g_signal_connect(G_OBJECT(entry_num_vars), "insert-text", G_CALLBACK(on_entry_numbers_insert_text), NULL);
+g_signal_connect(G_OBJECT(entry_num_constraints), "insert-text", G_CALLBACK(on_entry_numbers_insert_text), NULL);
+
 
     gtk_widget_show_all(window);
     gtk_main();
