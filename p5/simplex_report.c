@@ -1025,61 +1025,68 @@ static void tex_print_number(FILE *f, double v)
 
 static void tex_varname(FILE *f, int j, int n)
 {
+    /* j: índice de columna en el tableau (0..cols-2).
+       n: número de variables originales del problema.
+
+       - Para j < n: mostramos x_j (variables originales).
+       - Para j >= n: mostramos y_k (variables "extras": holguras, excedentes,
+         artificiales, etc.). No distinguimos el tipo, pero sí quedan etiquetadas.
+    */
     if (j < n)
         fprintf(f, "$x_{%d}$", j + 1);
     else
-        fprintf(f, "$s_{%d}$", j - n + 1);
+        fprintf(f, "$y_{%d}$", j - n + 1);
 }
+
 
 static void tex_write_table_step(FILE *f, const SimplexStep *st, int n, int m)
 {
-    const int total_vars = n + m;
+    (void)m; /* m ya no se usa directamente para columnas; lo dejamos por firma */
     const int rows = st->rows;
-    const int cols = st->cols;
+    const int cols = st->cols;   /* columnas reales del tableau (incluye b) */
     const double *T = st->tableau;
 
     fprintf(f, "\\begin{table}[h]\n\\centering\n");
-    if (st->entering >= 0 && st->leaving_row >= 0)
-    {
+    if (st->entering >= 0 && st->leaving_row >= 0) {
         fprintf(f, "\\caption{Iteraci\\'on %d: entra la columna ", st->iter);
         tex_varname(f, st->entering, n);
         fprintf(f, " y sale la fila $R_{%d}$.}\n", st->leaving_row);
-    }
-    else if (st->iter == 0)
-    {
+    } else if (st->iter == 0) {
         fprintf(f, "\\caption{Tabla inicial.}\n");
-    }
-    else
-    {
+    } else {
         fprintf(f, "\\caption{Tabla final.}\n");
     }
 
     fprintf(f, "\\setlength{\\tabcolsep}{6pt}\n");
     fprintf(f, "\\renewcommand{\\arraystretch}{1.15}\n");
-    fprintf(f, "\\begin{tabular}{l");
-    for (int j = 0; j < total_vars; ++j)
-        fprintf(f, "r");
-    fprintf(f, "r}\n\\toprule\n");
 
-    /* Encabezados: x1..xn, s1..sm, b */
-    fprintf(f, " & ");
-    for (int j = 0; j < n; ++j)
-        fprintf(f, "$x_{%d}$ & ", j + 1);
-    for (int j = 0; j < m; ++j)
-        fprintf(f, "$s_{%d}$ & ", j + 1);
-    fprintf(f, "$b$ \\\\\n\\midrule\n");
+    /* Estructura de columnas:
+       - 1 columna para la etiqueta ("Base"/"Z"/"R_i")
+       - cols columnas para los datos del tableau (incluida b)
+     */
+    fprintf(f, "\\begin{tabular}{l");
+    for (int j = 0; j < cols; ++j)
+        fprintf(f, "r");
+    fprintf(f, "}\n\\toprule\n");
+
+    /* Encabezados: Base | var_1 ... var_{cols-1} | b */
+    fprintf(f, "Base");
+    for (int j = 0; j < cols; ++j) {
+        fprintf(f, " & ");
+        if (j < cols - 1)
+            tex_varname(f, j, n);
+        else
+            fprintf(f, "$b$");
+    }
+    fprintf(f, " \\\\\n\\midrule\n");
 
     /* Fila 0: Z */
     fprintf(f, "$Z$ & ");
-    for (int j = 0; j < cols; ++j)
-    {
-        if (j == cols - 1)
-        { /* b */
+    for (int j = 0; j < cols; ++j) {
+        if (j == cols - 1) { /* b */
             tex_print_number(f, ROWc(T, cols, 0)[j]);
             fprintf(f, " \\\\\n");
-        }
-        else
-        {
+        } else {
             int color_col = (st->entering == j) ? 1 : 0;
             if (color_col)
                 fprintf(f, "\\cellcolor{blue!12}");
@@ -1088,25 +1095,20 @@ static void tex_write_table_step(FILE *f, const SimplexStep *st, int n, int m)
         }
     }
 
-    /* Filas 1..m */
-    for (int i = 1; i < rows; ++i)
-    {
+    /* Filas 1..(rows-1): restricciones */
+    for (int i = 1; i < rows; ++i) {
         fprintf(f, "$R_{%d}$ & ", i);
-        for (int j = 0; j < cols; ++j)
-        {
+        for (int j = 0; j < cols; ++j) {
             int color_col = (st->entering == j);
             int color_row = (st->leaving_row == i);
-            int is_pivot = color_col && color_row;
+            int is_pivot  = color_col && color_row;
 
-            if (j == cols - 1)
-            { /* b */
+            if (j == cols - 1) { /* b */
                 if (color_row)
                     fprintf(f, "\\cellcolor{green!12}");
                 tex_print_number(f, ROWc(T, cols, i)[j]);
                 fprintf(f, " \\\\\n");
-            }
-            else
-            {
+            } else {
                 if (is_pivot)
                     fprintf(f, "\\cellcolor{orange!35}");
                 else if (color_col)
@@ -1122,20 +1124,17 @@ static void tex_write_table_step(FILE *f, const SimplexStep *st, int n, int m)
     fprintf(f, "\\bottomrule\n\\end{tabular}\n");
 
     /* Fracciones (si hay) */
-    if (st->ratios && st->ratios_m == m && st->entering >= 0 && st->leaving_row > 0)
-    {
+    if (st->ratios && st->ratios_m > 0 && st->entering >= 0 && st->leaving_row > 0) {
         fprintf(f, "\\\\[4pt]\\textbf{Fracciones } $b_i/a_{i,j}$ para la columna ");
         tex_varname(f, st->entering, n);
         fprintf(f, ":\\\\\n");
-        for (int i = 1; i <= m; ++i)
-        {
+        for (int i = 1; i <= st->ratios_m; ++i) {
             double r = st->ratios[i - 1];
-            if (!isnan(r))
-            {
+            if (!isnan(r)) {
                 fprintf(f, "$R_{%d} = %.6f$", i, clip_negzero(r));
                 if (i == st->leaving_row)
                     fprintf(f, " \\;\\;\\textbf{(m\\'inima)}");
-                if (i < m)
+                if (i < st->ratios_m)
                     fprintf(f, ",\\ ");
             }
         }
@@ -1143,6 +1142,8 @@ static void tex_write_table_step(FILE *f, const SimplexStep *st, int n, int m)
     }
     fprintf(f, "\\end{table}\n\n");
 }
+
+
 
 static void write_multiple_solutions_section(FILE *f,
                                              const SimplexProblem *prob,

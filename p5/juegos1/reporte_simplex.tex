@@ -32,9 +32,9 @@ El algoritmo S\'implex, propuesto por George Dantzig en 1947, es un procedimient
 \caption{Tabla inicial.}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $x_{3}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $y_{4}$ & $y_{5}$ & $y_{6}$ & $b$ \\
 \midrule
 $Z$ & -13999999,000000 & -13999999,000000 & -18999999,000000 & 1000000,000000 & 1000000,000000 & 1000000,000000 & 0,000000 & 0,000000 & 0,000000 & -3000000,000000 \\
 $R_{1}$ & 6,000000 & 2,000000 & 5,000000 & -1,000000 & 0,000000 & 0,000000 & 1,000000 & 0,000000 & 0,000000 & 1,000000 \\
@@ -49,9 +49,9 @@ $R_{3}$ & 7,000000 & 5,000000 & 9,000000 & 0,000000 & 0,000000 & -1,000000 & 0,0
 \caption{Iteraci\'on 1: entra la columna $x_{3}$ y sale la fila $R_{3}$.}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $x_{3}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $y_{4}$ & $y_{5}$ & $y_{6}$ & $b$ \\
 \midrule
 $Z$ & -13999999,000000 & -13999999,000000 & \cellcolor{blue!12}-18999999,000000 & 1000000,000000 & 1000000,000000 & 1000000,000000 & 0,000000 & 0,000000 & 0,000000 & -3000000,000000 \\
 $R_{1}$ & 6,000000 & 2,000000 & \cellcolor{blue!12}5,000000 & -1,000000 & 0,000000 & 0,000000 & 1,000000 & 0,000000 & 0,000000 & 1,000000 \\
@@ -68,9 +68,9 @@ $R_{1} = 0,200000$,\ $R_{2} = 0,200000$,\ $R_{3} = 0,111111$ \;\;\textbf{(m\'ini
 \caption{Iteraci\'on 2: entra la columna $x_{2}$ y sale la fila $R_{2}$.}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $x_{3}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $y_{4}$ & $y_{5}$ & $y_{6}$ & $b$ \\
 \midrule
 $Z$ & 777778,000000 & \cellcolor{blue!12}-3444444,000000 & 0,000000 & 1000000,000000 & 1000000,000000 & -1111111,000000 & 0,000000 & 0,000000 & 2111111,000000 & -888889,000000 \\
 $R_{1}$ & 2,111111 & \cellcolor{blue!12}-0,777778 & 0,000000 & -1,000000 & 0,000000 & 0,555556 & 1,000000 & 0,000000 & -0,555556 & 0,444444 \\
@@ -87,9 +87,9 @@ $R_{2} = 0,105263$ \;\;\textbf{(m\'inima)},\ $R_{3} = 0,200000$.
 \caption{Iteraci\'on 3: entra la columna $x_{1}$ y sale la fila $R_{3}$.}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $x_{3}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $y_{4}$ & $y_{5}$ & $y_{6}$ & $b$ \\
 \midrule
 $Z$ & \cellcolor{blue!12}-1578946,842105 & 0,000000 & 0,000000 & 1000000,000000 & 184210,631579 & -657894,684211 & 0,000000 & 815789,368421 & 1657894,684211 & -526315,947368 \\
 $R_{1}$ & \cellcolor{blue!12}1,578947 & 0,000000 & 0,000000 & -1,000000 & -0,184211 & 0,657895 & 1,000000 & 0,184211 & -0,657895 & 0,526316 \\
@@ -103,12 +103,12 @@ $R_{1} = 0,333333$,\ $R_{3} = 0,045455$ \;\;\textbf{(m\'inima)}.
 
 \begin{table}[h]
 \centering
-\caption{Iteraci\'on 4: entra la columna $s_{3}$ y sale la fila $R_{1}$.}
+\caption{Iteraci\'on 4: entra la columna $y_{3}$ y sale la fila $R_{1}$.}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $x_{3}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $y_{4}$ & $y_{5}$ & $y_{6}$ & $b$ \\
 \midrule
 $Z$ & 0,000000 & 0,000000 & 1363635,909091 & 1000000,000000 & 363636,409091 & \cellcolor{blue!12}-909090,772727 & 0,000000 & 636363,590909 & 1909090,772727 & -454545,636364 \\
 $R_{1}$ & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}-1,363636 & \cellcolor{green!12}-1,000000 & \cellcolor{green!12}-0,363636 & \cellcolor{orange!35}0,909091 & \cellcolor{green!12}1,000000 & \cellcolor{green!12}0,363636 & \cellcolor{green!12}-0,909091 & \cellcolor{green!12}0,454545 \\
@@ -116,7 +116,7 @@ $R_{2}$ & 0,000000 & 1,000000 & 0,590909 & 0,000000 & -0,159091 & \cellcolor{blu
 $R_{3}$ & 1,000000 & 0,000000 & 0,863636 & 0,000000 & 0,113636 & \cellcolor{blue!12}-0,159091 & 0,000000 & -0,113636 & 0,159091 & 0,045455 \\
 \bottomrule
 \end{tabular}
-\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $s_{3}$:\\
+\\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $y_{3}$:\\
 $R_{1} = 0,500000$ \;\;\textbf{(m\'inima)},\ $R_{2} = 6,000000$,\ .
 \end{table}
 
@@ -125,9 +125,9 @@ $R_{1} = 0,500000$ \;\;\textbf{(m\'inima)},\ $R_{2} = 6,000000$,\ .
 \caption{Iteraci\'on 5: entra la columna $x_{3}$ y sale la fila $R_{3}$.}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $x_{3}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $y_{4}$ & $y_{5}$ & $y_{6}$ & $b$ \\
 \midrule
 $Z$ & 0,000000 & 0,000000 & \cellcolor{blue!12}-0,250000 & 0,150000 & 0,100000 & 0,000000 & 999999,850000 & 999999,900000 & 1000000,000000 & -0,250000 \\
 $R_{1}$ & 0,000000 & 0,000000 & \cellcolor{blue!12}-1,500000 & -1,100000 & -0,400000 & 1,000000 & 1,100000 & 0,400000 & -1,000000 & 0,500000 \\
@@ -144,9 +144,9 @@ $R_{2} = 0,200000$,\ $R_{3} = 0,200000$ \;\;\textbf{(m\'inima)}.
 \caption{Tabla final.}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $x_{3}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $x_{3}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $y_{4}$ & $y_{5}$ & $y_{6}$ & $b$ \\
 \midrule
 $Z$ & 0,400000 & 0,000000 & 0,000000 & 0,080000 & 0,120000 & 0,000000 & 999999,920000 & 999999,880000 & 1000000,000000 & -0,200000 \\
 $R_{1}$ & 2,400000 & 0,000000 & 0,000000 & -1,520000 & -0,280000 & 1,000000 & 1,520000 & 0,280000 & -1,000000 & 0,800000 \\
