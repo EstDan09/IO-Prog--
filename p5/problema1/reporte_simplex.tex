@@ -18,20 +18,17 @@ Fecha: \today
 \end{titlepage}
 \newpage
 \section*{Planteamiento del Problema}
-Maximizar \[ Z = 4,000x_1 +1,000x_2 \]
+Maximizar \[ Z = 4.000x_1 +1.000x_2 \]
 Sujeto a:\[ 
-2,000x_1 
-+3,000x_2 
-\le 4,000\\
-1,000x_1 
-+1,000x_2 
-\le 1,000\\
-4,000x_1 
-+1,000x_2 
-\le 2,000\\
+2.000x_1 +3.000x_2 \le 4.000\\
+1.000x_1 +1.000x_2 \le 1.000\\
+4.000x_1 +1.000x_2 \le 2.000\\
 x_i \ge 0 \text{ para todo } i.\]
 \section*{Descripci\'on del M\'etodo S\'implex}
-El algoritmo S\'implex, propuesto por George Dantzig en 1947, es un procedimiento iterativo que explora los v\'ertices del poliedro factible para encontrar la soluci\'on \textit{\'optima} de un problema lineal. En cada iteraci\'on se determina una variable que entra a la base y otra que sale, hasta que no existen mejoras posibles en la funci\'on objetivo.\\[1em]
+El m\'etodo S\'implex, desarrollado por George Dantzig en 1947, es un algoritmo iterativo para resolver problemas de programaci\'on lineal en forma est\'andar. Su fundamento te\'orico radica en que, si el conjunto factible es un poliedro convexo y la funci\'on objetivo es lineal, entonces la soluci\'on \textit{\'optima} se alcanza necesariamente en uno de los v\'ertices del poliedro.\\[1em]
+El algoritmo parte de una soluci\'on b\'asica factible inicial, representada por una base de variables. En cada iteraci\'on, el S\'implex calcula los costos reducidos o indicadores de mejora para determinar qu\'e variable no b\'asica debe entrar a la base (variable entrante). Simult\'aneamente, se aplica la prueba de raz\'on m\'inima para identificar la variable que debe abandonar la base (variable saliente), garantizando la factibilidad de la soluci\'on.\\[1em]
+Tras actualizar la base y la tabla correspondiente, el proceso se repite hasta que todos los costos reducidos indican que no existen mejoras posibles en la funci\'on objetivo; en ese punto, la soluci\'on b\'asica actual es \textbf{\'optima}. En caso de que no exista variable saliente, el problema es no acotado. Si ninguna soluci\'on factible puede construirse desde el inicio, se declara el problema como infactible.\\[1em]
+El m\'etodo S\'implex es eficiente en la pr\'actica debido a que explora s\'olo una peque\~na fracci\'on de los v\'ertices del poliedro factible, y constituye uno de los algoritmos m\'as influyentes en optimizaci\'on matem\'atica y operaciones.\\[1em]
 \section*{Tablas del M\'etodo S\'implex}
 \begin{table}[h]
 \centering
@@ -40,12 +37,12 @@ El algoritmo S\'implex, propuesto por George Dantzig en 1947, es un procedimient
 \renewcommand{\arraystretch}{1.15}
 \begin{tabular}{lrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $b$ \\
 \midrule
-$Z$ & -4,000000 & -1,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 \\
-$R_{1}$ & 2,000000 & 3,000000 & 1,000000 & 0,000000 & 0,000000 & 4,000000 \\
-$R_{2}$ & 1,000000 & 1,000000 & 0,000000 & 1,000000 & 0,000000 & 1,000000 \\
-$R_{3}$ & 4,000000 & 1,000000 & 0,000000 & 0,000000 & 1,000000 & 2,000000 \\
+$Z$ & -4.000000 & -1.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 \\
+$R_{1}$ & 2.000000 & 3.000000 & 1.000000 & 0.000000 & 0.000000 & 4.000000 \\
+$R_{2}$ & 1.000000 & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 1.000000 \\
+$R_{3}$ & 4.000000 & 1.000000 & 0.000000 & 0.000000 & 1.000000 & 2.000000 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -57,16 +54,16 @@ $R_{3}$ & 4,000000 & 1,000000 & 0,000000 & 0,000000 & 1,000000 & 2,000000 \\
 \renewcommand{\arraystretch}{1.15}
 \begin{tabular}{lrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $b$ \\
 \midrule
-$Z$ & \cellcolor{blue!12}-4,000000 & -1,000000 & 0,000000 & 0,000000 & 0,000000 & 0,000000 \\
-$R_{1}$ & \cellcolor{blue!12}2,000000 & 3,000000 & 1,000000 & 0,000000 & 0,000000 & 4,000000 \\
-$R_{2}$ & \cellcolor{blue!12}1,000000 & 1,000000 & 0,000000 & 1,000000 & 0,000000 & 1,000000 \\
-$R_{3}$ & \cellcolor{orange!35}4,000000 & \cellcolor{green!12}1,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}0,000000 & \cellcolor{green!12}1,000000 & \cellcolor{green!12}2,000000 \\
+$Z$ & \cellcolor{blue!12}-4.000000 & -1.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 \\
+$R_{1}$ & \cellcolor{blue!12}2.000000 & 3.000000 & 1.000000 & 0.000000 & 0.000000 & 4.000000 \\
+$R_{2}$ & \cellcolor{blue!12}1.000000 & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 1.000000 \\
+$R_{3}$ & \cellcolor{orange!35}4.000000 & \cellcolor{green!12}1.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}0.000000 & \cellcolor{green!12}1.000000 & \cellcolor{green!12}2.000000 \\
 \bottomrule
 \end{tabular}
 \\[4pt]\textbf{Fracciones } $b_i/a_{i,j}$ para la columna $x_{1}$:\\
-$R_{1} = 2,000000$,\ $R_{2} = 1,000000$,\ $R_{3} = 0,500000$ \;\;\textbf{(m\'inima)}.
+$R_{1} = 2.000000$,\ $R_{2} = 1.000000$,\ $R_{3} = 0.500000$ \;\;\textbf{(m\'inima)}.
 \end{table}
 
 \begin{table}[h]
@@ -76,20 +73,60 @@ $R_{1} = 2,000000$,\ $R_{2} = 1,000000$,\ $R_{3} = 0,500000$ \;\;\textbf{(m\'ini
 \renewcommand{\arraystretch}{1.15}
 \begin{tabular}{lrrrrrr}
 \toprule
- & $x_{1}$ & $x_{2}$ & $s_{1}$ & $s_{2}$ & $s_{3}$ & $b$ \\
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $b$ \\
 \midrule
-$Z$ & 0,000000 & 0,000000 & 0,000000 & 0,000000 & 1,000000 & 2,000000 \\
-$R_{1}$ & 0,000000 & 2,500000 & 1,000000 & 0,000000 & -0,500000 & 3,000000 \\
-$R_{2}$ & 0,000000 & 0,750000 & 0,000000 & 1,000000 & -0,250000 & 0,500000 \\
-$R_{3}$ & 1,000000 & 0,250000 & 0,000000 & 0,000000 & 0,250000 & 0,500000 \\
+$Z$ & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 1.000000 & 2.000000 \\
+$R_{1}$ & 0.000000 & 2.500000 & 1.000000 & 0.000000 & -0.500000 & 3.000000 \\
+$R_{2}$ & 0.000000 & 0.750000 & 0.000000 & 1.000000 & -0.250000 & 0.500000 \\
+$R_{3}$ & 1.000000 & 0.250000 & 0.000000 & 0.000000 & 0.250000 & 0.500000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \section*{Resultados y Casos Especiales}
 Estado del problema: \textbf{Óptimo (múltiples soluciones)}.\\
-Valor \textit{\'optimo}: $Z^* = 2,000000$.\\[4pt]
+Valor \textit{\'optimo}: $Z^* = 2.000000$.\\[4pt]
 Soluci\'on \textit{\'optima}:\\[4pt]
-\[ x_1 = 0,500000,\;x_2 = 0,000000. \]
+\[ x_1 = 0.500000,\;x_2 = 0.000000. \]
 El problema presenta \textbf{m\'ultiples soluciones \textit{\'optimas}}. Se puede obtener una familia de soluciones a lo largo de la recta de \textit{\'optimos}.\\[6pt]
+\subsection*{M\'ultiples soluciones}
+Se detect\'o una variable no b\'asica con costo reducido cero: $x_{2}$. Esto implica la existencia de un conjunto infinito de \'optimos.\\[4pt]
+Una parametrizaci\'on de la arista \'optima es:
+\[
+x_2 = t,\quad x_{B_i} = b_i - a_{i,2}\,t,\quad 0 \le t \le 0.666667
+\]
+donde $0 \le t \le \theta$ proviene del an\'alisis de fracciones v\'alidas.\\[6pt]
+\paragraph{Puntos adicionales sobre la arista \'optima.}
+Punto 1:\; $t = 0.166667$\; $\Rightarrow$ $x_{1} = 0.458333$,\;$x_{2} = 0.166667$.\\
+Punto 2:\; $t = 0.333333$\; $\Rightarrow$ $x_{1} = 0.416667$,\;$x_{2} = 0.333333$.\\
+Punto 3:\; $t = 0.500000$\; $\Rightarrow$ $x_{1} = 0.375000$,\;$x_{2} = 0.500000$.\\
+\paragraph{Tabla final alterna.}
+\begin{table}[h]
+\centering
+\caption{Tabla final.}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lrrrrrr}
+\toprule
+Base & $x_{1}$ & $x_{2}$ & $y_{1}$ & $y_{2}$ & $y_{3}$ & $b$ \\
+\midrule
+$Z$ & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 1.000000 & 2.000000 \\
+$R_{1}$ & 0.000000 & 0.000000 & 1.000000 & -3.333333 & 0.333333 & 1.333333 \\
+$R_{2}$ & 0.000000 & 1.000000 & 0.000000 & 1.333333 & -0.333333 & 0.666667 \\
+$R_{3}$ & 1.000000 & 0.000000 & 0.000000 & -0.333333 & 0.333333 & 0.333333 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Soluci\'on alterna b\'asica: $x_{1}=0.333333$,\;$x_{2}=0.666667$;\quad Z = 2.000000.\\[6pt]
+\paragraph{Valores de todas las variables en la soluci\'on alterna.}\\
+\[
+\begin{aligned}
+x_{1} &= 0.333333 \\
+x_{2} &= 0.000000 \\
+s_{1} &= 1.333333 \\
+s_{2} &= 0.666667 \\
+s_{3} &= 0.000000 \\
+\end{aligned}
+\]
 \vfill\smallskip\noindent Documento generado por Otro Simplex mas, de Esteban Secaida y Fabi\'an Bustos \end{document}

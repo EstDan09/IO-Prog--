@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.9.26)  24 NOV 2025 10:28
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.9.26)  24 NOV 2025 10:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -385,10 +385,7 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count296
 \l__pdf_internal_box=\box55
 )
-(./reporte_simplex.aux
-LaTeX Info: Redefining \. on input line 11.
-LaTeX Info: Redefining \% on input line 11.
-)
+No file reporte_simplex.aux.
 \openout1 = `reporte_simplex.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
@@ -411,7 +408,6 @@ LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 9.
 LaTeX Font Info:    ... okay on input line 9.
 LaTeX Info: Redefining \. on input line 9.
 LaTeX Info: Redefining \% on input line 9.
-
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -469,12 +465,11 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 Package hyperref Info: Link coloring OFF on input line 9.
-
-(./reporte_simplex.out) (./reporte_simplex.out)
 \@outlinefile=\write3
 \openout3 = `reporte_simplex.out'.
 
- [1
+
+[1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Trying to load font information for U+msa on input line 21.
@@ -489,15 +484,12 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 21.
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Underfull \hbox (badness 10000) in paragraph at lines 27--31
+Underfull \hbox (badness 10000) in paragraph at lines 27--28
 
  []
 
 
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 83--86
+Underfull \hbox (badness 10000) in paragraph at lines 80--83
 
  []
 
@@ -506,24 +498,24 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.86 \[
-        x_1 = 0.000000,\;x_2 = 1.000000. \] [1]
-Underfull \hbox (badness 10000) in paragraph at lines 86--88
+l.83 \[ x1 = 1.000000,\;x2 = 0.000000. \]
+                                          [1]
+Underfull \hbox (badness 10000) in paragraph at lines 83--85
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 93--95
+Underfull \hbox (badness 10000) in paragraph at lines 90--92
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 96--99
+Underfull \hbox (badness 10000) in paragraph at lines 93--96
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 116--117
+Underfull \hbox (badness 10000) in paragraph at lines 113--114
 
  []
 
@@ -535,17 +527,24 @@ LaTeX Info: Redefining \% on input line 11.
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
-Package rerunfilecheck Info: File `reporte_simplex.out' has not changed.
-(rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
+
+
+Package rerunfilecheck Warning: File `reporte_simplex.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `reporte_simplex.out':
+(rerunfilecheck)             Before: <no file>
+(rerunfilecheck)             After:  D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 12404 strings out of 476120
- 189058 string characters out of 5793657
- 1938975 words of memory out of 5000000
- 34236 multiletter control sequences out of 15000+600000
+ 12396 strings out of 476120
+ 188874 string characters out of 5793657
+ 1936975 words of memory out of 5000000
+ 34234 multiletter control sequences out of 15000+600000
  571044 words of font info for 65 fonts, out of 8000000 for 9000
  40 hyphenation exceptions out of 8191
- 75i,11n,79p,496b,499s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,11n,79p,405b,499s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/fabian/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.60
 0pk> </home/fabian/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbi1095.
 600pk> </home/fabian/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti109
@@ -562,9 +561,9 @@ i6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb>
 hare/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/tex
 live/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/t
 exmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb>
-Output written on reporte_simplex.pdf (3 pages, 133112 bytes).
+Output written on reporte_simplex.pdf (3 pages, 128137 bytes).
 PDF statistics:
- 307 PDF objects out of 1000 (max. 8388607)
+ 299 PDF objects out of 1000 (max. 8388607)
  85 compressed objects within 1 object stream
  14 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)

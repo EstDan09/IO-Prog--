@@ -1151,99 +1151,101 @@ static void write_multiple_solutions_section(FILE *f,
 {
     int n = prob->n, m = prob->m;
     int rows = res->rows, cols = res->cols;
-    if (res->alt_var_index < 0)
-        return;
-    if (!res->final_tableau)
-        return;
+
+    if (res->alt_var_index < 0) return;
+    if (!res->final_tableau) return;
 
     int j = res->alt_var_index;
 
-    /* Calcular theta: mínimo bi/aij con aij>0 en la columna j */
+    /* ---- Compute theta ---- */
     double theta = INFINITY;
-    for (int i = 1; i <= m; ++i)
-    {
+    for (int i = 1; i <= m; ++i) {
         double aij = ROWc(res->final_tableau, cols, i)[j];
-        double bi = ROWc(res->final_tableau, cols, i)[cols - 1];
-        if (aij > SIMPLEX_EPS)
-        {
+        double bi  = ROWc(res->final_tableau, cols, i)[cols - 1];
+        if (aij > SIMPLEX_EPS) {
             double r = bi / aij;
             if (r + SIMPLEX_EPS < theta)
                 theta = r;
         }
     }
-    if (!isfinite(theta))
-        theta = 0.0;
+    if (!isfinite(theta)) theta = 0.0;
 
+    /* ---- Header ---- */
     fprintf(f, "\\subsection*{M\\'ultiples soluciones}\n");
     fprintf(f, "Se detect\\'o una variable no b\\'asica con costo reducido cero: ");
     tex_varname(f, j, n);
-    fprintf(f, ". Esto implica la existencia de un conjunto infinito de \\'{o}ptimos.\\\\[4pt]\n");
+    fprintf(f, ". Esto implica la existencia de un conjunto infinito de \\'optimos.\\\\[4pt]\n");
 
-    /* Parametrización general */
+    /* ---- Parametrization (NO nested $ inside \[ ! ) ---- */
     fprintf(f, "Una parametrizaci\\'on de la arista \\'optima es:\n");
-    fprintf(f, "$$");
-    tex_varname(f, j, n);
-    fprintf(f, " = t,\\quad x_{B_i} = b_i - a_{i,%d}\\,t,\\quad 0 \\le t \\le \\theta,$$ ", j + 1);
-    fprintf(f, "tomando $\\theta = %.6f$ de las fracciones v\\'alidas.\\\\[6pt]\n", clip_negzero(theta));
 
-    /* Mostrar 3 puntos adicionales en variables originales */
-    double t1 = theta / 4.0, t2 = theta / 2.0, t3 = (3.0 * theta) / 4.0;
-    double *xpt = (double *)calloc((size_t)n, sizeof(double));
-    if (xpt)
-    {
-        for (int k = 0; k < 3; ++k)
-        {
-            double t = (k == 0) ? t1 : (k == 1) ? t2
-                                                : t3;
-            for (int jj = 0; jj < n; ++jj)
-                xpt[jj] = 0.0;
-            if (j < n)
-                xpt[j] = t;
-            for (int i = 1; i <= m; ++i)
-            {
-                int var = res->basis[i - 1];
-                if (var >= 0 && var < n)
-                {
-                    double bi = ROWc(res->final_tableau, cols, i)[cols - 1];
-                    double aij = ROWc(res->final_tableau, cols, i)[j];
-                    xpt[var] = bi - aij * t;
-                }
+    fprintf(f, "\\[\n");
+    fprintf(f, "%s = t,\\quad x_{B_i} = b_i - a_{i,%d}\\,t,\\quad 0 \\le t \\le %.6f\n",
+            latex_safe_varname_nomath(NULL, j), j + 1, clip_negzero(theta));
+    fprintf(f, "\\]\n");
+
+    fprintf(f, "donde $0 \\le t \\le \\theta$ proviene del an\\'alisis de fracciones v\\'alidas.\\\\[6pt]\n");
+
+    /* ---- Sample points ---- */
+    double tvals[3] = { theta/4.0, theta/2.0, (3.0*theta)/4.0 };
+    double *xpt = calloc(n, sizeof(double));
+
+    fprintf(f, "\\paragraph{Puntos adicionales sobre la arista \\\'optima.}\n");
+
+    for (int k = 0; k < 3; ++k) {
+        double t = tvals[k];
+
+        for (int jj = 0; jj < n; ++jj) xpt[jj] = 0.0;
+
+        if (j < n)
+            xpt[j] = t;
+
+        for (int i = 1; i <= m; ++i) {
+            int var = res->basis[i - 1];
+            if (var >= 0 && var < n) {
+                double bi  = ROWc(res->final_tableau, cols, i)[cols - 1];
+                double aij = ROWc(res->final_tableau, cols, i)[j];
+                xpt[var] = bi - aij * t;
             }
-            fprintf(f, "Punto %d: $t=%.6f$ \\;$\\Rightarrow$\\; ", k + 1, clip_negzero(t));
-            for (int jj = 0; jj < n; ++jj)
-            {
-                fprintf(f, "$x_{%d}=%.6f$", jj + 1, clip_negzero(xpt[jj]));
-                if (jj + 1 < n)
-                    fprintf(f, ",\\ ");
-            }
-            fprintf(f, ".\\\\\n");
         }
-        free(xpt);
+
+        fprintf(f, "Punto %d:\\; $t = %.6f$\\; $\\Rightarrow$ ", k+1, clip_negzero(t));
+
+        for (int jj = 0; jj < n; ++jj) {
+            fprintf(f, "$x_{%d} = %.6f$", jj+1, clip_negzero(xpt[jj]));
+            if (jj + 1 < n) fprintf(f, ",\\;");
+        }
+        fprintf(f, ".\\\\\n");
     }
 
-    /* Tabla alterna si la tenemos */
-    if (res->alt_tableau)
-    {
+    free(xpt);
+
+    /* ---- Alternate tableau ---- */
+    if (res->alt_tableau) {
         fprintf(f, "\\paragraph{Tabla final alterna.}\n");
-        SimplexStep fake = (SimplexStep){0};
+
+        SimplexStep fake = {0};
         fake.iter = res->iterations + 2;
         fake.rows = rows;
         fake.cols = cols;
+        fake.tableau = res->alt_tableau;
         fake.entering = -1;
         fake.leaving_row = -1;
-        fake.tableau = res->alt_tableau;
+
         tex_write_table_step(f, &fake, n, m);
 
         fprintf(f, "Soluci\\'on alterna b\\'asica: ");
-        for (int jj = 0; jj < n; ++jj)
-        {
-            fprintf(f, "$x_{%d}=%.6f$", jj + 1, clip_negzero(res->x_alt ? res->x_alt[jj] : 0.0));
-            if (jj + 1 < n)
-                fprintf(f, ",\\ ");
+        for (int jj = 0; jj < n; ++jj) {
+            fprintf(f, "$x_{%d}=%.6f$", jj+1,
+                    res->x_alt ? clip_negzero(res->x_alt[jj]) : 0.0);
+            if (jj + 1 < n) fprintf(f, ",\\;");
         }
-        fprintf(f, ";\\quad Z = %.6f.\\\\\n\n", clip_negzero(res->z_alt));
+        fprintf(f, ";\\quad Z = %.6f.\\\\[6pt]\n", clip_negzero(res->z_alt));
+        
     }
 }
+
+
 
 int simplex_write_latex_report(const char *base_name,
                                const SimplexProblem *prob,
@@ -1276,6 +1278,7 @@ int simplex_write_latex_report(const char *base_name,
     char tex_path[512], pdf_path[512];
     snprintf(tex_path, sizeof(tex_path), "%s/reporte_simplex.tex", folder);
     snprintf(pdf_path, sizeof(pdf_path), "%s/reporte_simplex.pdf", folder);
+    
 
     FILE *f = fopen(tex_path, "w");
     if (!f) return -1;
@@ -1345,11 +1348,33 @@ int simplex_write_latex_report(const char *base_name,
 
     /* ======== Description ======== */
     fputs("\\section*{Descripci\\'on del M\\'etodo S\\'implex}\n", f);
-    fputs("El algoritmo S\\'implex, propuesto por George Dantzig en 1947, "
-          "es un procedimiento iterativo que explora los v\\'ertices del poliedro factible "
-          "para encontrar la soluci\\'on \\textit{\\'optima} de un problema lineal. "
-          "En cada iteraci\\'on se determina una variable que entra a la base y otra que sale, "
-          "hasta que no existen mejoras posibles en la funci\\'on objetivo.\\\\[1em]\n", f);
+fputs("El m\\'etodo S\\'implex, desarrollado por George Dantzig en 1947, "
+      "es un algoritmo iterativo para resolver problemas de programaci\\'on lineal "
+      "en forma est\\'andar. Su fundamento te\\'orico radica en que, si el conjunto "
+      "factible es un poliedro convexo y la funci\\'on objetivo es lineal, entonces la "
+      "soluci\\'on \\textit{\\'optima} se alcanza necesariamente en uno de los v\\'ertices "
+      "del poliedro.\\\\[1em]\n", f);
+
+fputs("El algoritmo parte de una soluci\\'on b\\'asica factible inicial, representada "
+      "por una base de variables. En cada iteraci\\'on, el S\\'implex calcula los "
+      "costos reducidos o indicadores de mejora para determinar qu\\'e variable "
+      "no b\\'asica debe entrar a la base (variable entrante). "
+      "Simult\\'aneamente, se aplica la prueba de raz\\'on m\\'inima para identificar "
+      "la variable que debe abandonar la base (variable saliente), garantizando "
+      "la factibilidad de la soluci\\'on.\\\\[1em]\n", f);
+
+fputs("Tras actualizar la base y la tabla correspondiente, el proceso se repite "
+      "hasta que todos los costos reducidos indican que no existen mejoras posibles "
+      "en la funci\\'on objetivo; en ese punto, la soluci\\'on b\\'asica actual es "
+      "\\textbf{\\'optima}. En caso de que no exista variable saliente, "
+      "el problema es no acotado. Si ninguna soluci\\'on factible puede construirse "
+      "desde el inicio, se declara el problema como infactible.\\\\[1em]\n", f);
+
+fputs("El m\\'etodo S\\'implex es eficiente en la pr\\'actica debido a que explora "
+      "s\\'olo una peque\\~na fracci\\'on de los v\\'ertices del poliedro factible, "
+      "y constituye uno de los algoritmos m\\'as influyentes en optimizaci\\'on "
+      "matem\\'atica y operaciones.\\\\[1em]\n", f);
+
 
     /* ======== Tables ======== */
     fputs("\\section*{Tablas del M\\'etodo S\\'implex}\n", f);
